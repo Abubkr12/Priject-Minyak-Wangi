@@ -1,0 +1,149 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ShoppingBag, Menu, X } from "lucide-react";
+import { useState } from "react";
+import { useCart } from "@/lib/cart-context";
+import { ThemeToggle } from "@/components/theme-toggle";
+
+const navLinks = [
+  { label: "Beranda", href: "/" },
+  { label: "Katalog", href: "/katalog" },
+  { label: "Tentang", href: "/about" },
+  { label: "Kontak", href: "/kontak" },
+  { label: "FAQ", href: "/faq" },
+];
+
+export function PageHeader() {
+  const pathname = usePathname();
+  const { totalItems } = useCart();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  return (
+    <>
+      <header className="topbar">
+        <Link href="/" className="topbar__brand">
+          <span className="brand-mark">EP</span>
+          <div>
+            <div className="brand-name">Ela Parfum</div>
+            <div className="brand-sub">Parfum Isi Ulang</div>
+          </div>
+        </Link>
+
+        <div className="topbar__spacer" />
+
+        <nav className="topbar__nav" style={{ gap: "2px" }}>
+          {navLinks.map((link) => {
+            const isActive =
+              link.href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(link.href.replace("/#", "/"));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="topbar__nav-link"
+                style={
+                  isActive
+                    ? { color: "var(--c-gold)", background: "var(--c-gold-dim)" }
+                    : undefined
+                }
+              >
+                {link.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="topbar__actions">
+          <ThemeToggle />
+          <Link
+            href="/keranjang"
+            className="btn-icon"
+            aria-label="Keranjang belanja"
+            style={{ position: "relative" }}
+          >
+            <ShoppingBag size={18} />
+            {totalItems > 0 && (
+              <span
+                style={{
+                  position: "absolute",
+                  top: "-4px",
+                  right: "-4px",
+                  width: "18px",
+                  height: "18px",
+                  borderRadius: "50%",
+                  background: "var(--c-gold)",
+                  color: "#0a0c0b",
+                  fontSize: "0.68rem",
+                  fontWeight: 700,
+                  display: "grid",
+                  placeItems: "center",
+                  lineHeight: 1,
+                }}
+              >
+                {totalItems}
+              </span>
+            )}
+          </Link>
+
+          {/* Mobile hamburger */}
+          <button
+            className="btn-icon"
+            aria-label="Menu"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            style={{ display: "none" }}
+          >
+            {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
+        </div>
+
+
+      </header>
+
+      {/* Mobile nav overlay */}
+      {mobileOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            top: "64px",
+            zIndex: 99,
+            background: "var(--c-bg)",
+            padding: "24px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "4px",
+            animation: "fadeSlideIn 200ms var(--ease-out) both",
+          }}
+        >
+          {navLinks.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMobileOpen(false)}
+              style={{
+                padding: "14px 16px",
+                borderRadius: "var(--r-md)",
+                fontSize: "1rem",
+                fontWeight: 500,
+                color:
+                  pathname === link.href || pathname.startsWith(link.href.replace("/#", "/"))
+                    ? "var(--c-gold)"
+                    : "var(--c-ink-muted)",
+                background:
+                  pathname === link.href || pathname.startsWith(link.href.replace("/#", "/"))
+                    ? "var(--c-gold-dim)"
+                    : "transparent",
+                transition: "all 140ms",
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}

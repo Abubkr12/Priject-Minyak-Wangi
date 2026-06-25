@@ -1,0 +1,41 @@
+{
+  "name": "minyak-wangi",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "qa:visual": "node ./scripts/visual-check.mjs"
+  },
+  "dependencies": {
+    "@google/genai": "^2.8.0",
+    "@supabase/ssr": "^0.10.3",
+    "@supabase/supabase-js": "^2.107.0",
+    "date-fns": "^4.4.0",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.468.0",
+    "midtrans-client": "^1.4.3",
+    "next": "^16.2.7",
+    "react": "^19.0.0",
+    "react-datepicker": "^9.1.0",
+    "react-dom": "^19.0.0",
+    "react-easy-crop": "^5.5.7",
+    "react-leaflet": "^5.0.0",
+    "recharts": "^3.8.1",
+    "sonner": "^2.0.7"
+  },
+  "overrides": {
+    "postcss": "^8.5.15"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.0.2",
+    "@types/react-datepicker": "^6.2.0",
+    "@types/react-dom": "^19.0.2",
+    "pg": "^8.21.0",
+    "playwright": "^1.60.0",
+    "typescript": "^5.7.2"
+  }
+}

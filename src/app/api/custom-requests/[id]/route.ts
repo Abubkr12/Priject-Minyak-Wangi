@@ -1,0 +1,54 @@
+import { NextResponse } from "next/server";
+import { getSupabaseServer } from "@/lib/supabase-server";
+
+export async function GET(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const supabase = await getSupabaseServer();
+    const { id } = params;
+
+    const { data, error } = await supabase
+      .from("custom_requests")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+
+    return NextResponse.json({ data });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const supabase = await getSupabaseServer();
+    const { id } = params;
+    
+    // Check auth (assuming admin)
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    
+    // Update logic
+    const { data, error } = await supabase
+      .from("custom_requests")
+      .update(body)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
