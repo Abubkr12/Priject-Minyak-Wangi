@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabase-server";
+import { createServerSupabase } from "@/lib/supabase-server";
 
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const supabase = await getSupabaseServer();
-    const { id } = params;
+    const supabase = await createServerSupabase();
+    const { id } = await params;
 
     const { data, error } = await supabase
       .from("custom_requests")
@@ -22,10 +22,10 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const supabase = await getSupabaseServer();
-    const { id } = params;
+    const supabase = await createServerSupabase();
+    const { id } = await params;
     
     // Check auth (assuming admin)
     const { data: { user }, error: userError } = await supabase.auth.getUser();

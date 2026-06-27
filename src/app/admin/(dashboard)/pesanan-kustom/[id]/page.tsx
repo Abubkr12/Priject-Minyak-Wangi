@@ -15,6 +15,7 @@ export default function PesananKustomDetailPage() {
   const [loading, setLoading] = useState(true);
   
   // Pricing state
+  const [pricePerMl, setPricePerMl] = useState(0);
   const [pricePerfume, setPricePerfume] = useState(0);
   const [priceBottle, setPriceBottle] = useState(0);
   const [priceService, setPriceService] = useState(0);
@@ -31,7 +32,11 @@ export default function PesananKustomDetailPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
       setRequest(data.data);
+      // Initialize prices, or if it's already set from DB, we use DB. But for new pending orders, pricePerfume is 0.
       setPricePerfume(data.data.price_perfume || 0);
+      if (data.data.price_perfume && data.data.volume_ml) {
+        setPricePerMl(data.data.price_perfume / data.data.volume_ml);
+      }
       setPriceBottle(data.data.price_bottle || 0);
       setPriceService(data.data.price_service || 0);
     } catch (err: any) {
@@ -72,7 +77,7 @@ export default function PesananKustomDetailPage() {
   const copyPaymentLink = () => {
     const link = `${window.location.origin}/checkout/custom/${id}`;
     navigator.clipboard.writeText(
-      `Halo ${request.customer_name},\n\nPesanan parfum custom Anda "${request.ai_recipe.name_suggestion}" telah kami konfirmasi.\n\nTotal Biaya: Rp ${(request.total_price || 0).toLocaleString('id-ID')}\n\nSilakan lanjutkan pembayaran melalui link berikut:\n${link}\n\nTerima kasih,\nEla Parfum`
+      `Halo ${request.customer_name},\n\nPesanan parfum custom Anda "${request.ai_recipe.name_suggestion}" (${request.volume_ml || 30} ml) telah kami konfirmasi.\n\nTotal Biaya: Rp ${(request.total_price || 0).toLocaleString('id-ID')}\n\nSilakan lanjutkan pembayaran melalui link berikut:\n${link}\n\nTerima kasih,\nEla Parfum`
     );
     setCopied(true);
     toast.success("Teks dan link pembayaran disalin!");
@@ -96,44 +101,54 @@ export default function PesananKustomDetailPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 350px", gap: 24 }}>
         {/* Left Column - Details */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
           
-          <div className="card">
-            <h3 style={{ fontSize: "1.1rem", marginBottom: 16, color: "var(--c-ink)", borderBottom: "1px solid var(--c-border)", paddingBottom: 12 }}>Info Pelanggan</h3>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-              <div>
-                <p style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)" }}>Nama</p>
-                <p style={{ fontWeight: 500, color: "var(--c-ink)" }}>{request.customer_name}</p>
+          <div className="card" style={{ padding: "32px", border: "1px solid var(--c-border)", boxShadow: "0 10px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)", background: "var(--c-surface-2)", overflow: "hidden", position: "relative" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "4px", background: "linear-gradient(90deg, var(--c-gold), var(--c-gold-light))" }}></div>
+            <h3 style={{ fontSize: "1.2rem", marginBottom: 24, color: "var(--c-ink)", borderBottom: "1px solid var(--c-border)", paddingBottom: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+              Info Pelanggan
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+              <div style={{ background: "rgba(0,0,0,0.02)", padding: "12px 16px", borderRadius: "var(--r-md)" }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--c-ink-dim)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 4 }}>Nama</p>
+                <p style={{ fontWeight: 600, color: "var(--c-ink)", fontSize: "1.05rem" }}>{request.customer_name}</p>
               </div>
-              <div>
-                <p style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)" }}>WhatsApp</p>
-                <p style={{ fontWeight: 500, color: "var(--c-gold)" }}>{request.customer_whatsapp}</p>
+              <div style={{ background: "rgba(0,0,0,0.02)", padding: "12px 16px", borderRadius: "var(--r-md)" }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--c-ink-dim)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 4 }}>WhatsApp</p>
+                <p style={{ fontWeight: 600, color: "var(--c-gold)", fontSize: "1.05rem" }}>{request.customer_whatsapp}</p>
               </div>
             </div>
             
-            <div style={{ marginTop: 20 }}>
-              <p style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 8 }}>Permintaan Khusus (Deskripsi Customer)</p>
-              <div style={{ background: "var(--c-surface-1)", padding: 16, borderRadius: "var(--r-md)", fontStyle: "italic", color: "var(--c-ink)" }}>
+            <div style={{ marginTop: 24 }}>
+              <p style={{ fontSize: "0.8rem", color: "var(--c-ink-dim)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px" }}>Permintaan Khusus</p>
+              <div style={{ background: "rgba(255, 230, 180, 0.15)", borderLeft: "4px solid var(--c-gold)", padding: "16px 20px", borderRadius: "0 var(--r-md) var(--r-md) 0", fontStyle: "italic", color: "var(--c-ink-dim)", fontSize: "0.95rem", lineHeight: 1.6 }}>
                 "{request.description}"
               </div>
             </div>
           </div>
 
-          <div className="card">
-            <h3 style={{ fontSize: "1.1rem", marginBottom: 16, color: "var(--c-ink)", borderBottom: "1px solid var(--c-border)", paddingBottom: 12 }}>Resep Racikan AI</h3>
-            <div style={{ marginBottom: 16 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)" }}>Nama Saran AI:</span>
-              <p style={{ fontSize: "1.5rem", fontFamily: "var(--font-display)", color: "var(--c-gold)" }}>{request.ai_recipe?.name_suggestion}</p>
-            </div>
-            
-            <div style={{ marginBottom: 16 }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)" }}>Base Note:</span>
-              <p style={{ color: "var(--c-ink)" }}>{request.base_note}</p>
+          <div className="card" style={{ padding: "32px", border: "1px solid var(--c-border)", boxShadow: "0 10px 40px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.05)", background: "var(--c-surface-2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--c-border)", paddingBottom: 16, marginBottom: 24 }}>
+              <h3 style={{ fontSize: "1.2rem", color: "var(--c-ink)", fontWeight: 700, margin: 0 }}>Resep Racikan AI</h3>
+              <span style={{ background: "var(--c-gold-dim)", border: "1px solid var(--c-gold)", color: "var(--c-gold)", padding: "6px 16px", borderRadius: "var(--r-pill)", fontSize: "0.85rem", fontWeight: 700, letterSpacing: "1px" }}>
+                {request.volume_ml || 30} ML
+              </span>
             </div>
 
-            <div style={{ background: "rgba(0,0,0,0.3)", padding: 16, borderRadius: "var(--r-md)", border: "1px dashed var(--c-border)" }}>
-              <h4 style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "1px" }}>Technical Recipe</h4>
-              <p style={{ fontFamily: "monospace", color: "var(--c-ink)", whiteSpace: "pre-wrap" }}>
+            <div style={{ marginBottom: 20 }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--c-ink-dim)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Saran Nama:</span>
+              <p style={{ fontSize: "1.8rem", fontFamily: "var(--font-display)", color: "var(--c-gold)", lineHeight: 1.2, marginTop: 4 }}>{request.ai_recipe?.name_suggestion}</p>
+            </div>
+            
+            <div style={{ marginBottom: 24, padding: "16px", background: "rgba(0,0,0,0.02)", borderRadius: "var(--r-md)" }}>
+              <span style={{ fontSize: "0.8rem", color: "var(--c-ink-dim)", textTransform: "uppercase", letterSpacing: "0.5px" }}>Base Note Pilihan Customer:</span>
+              <p style={{ color: "var(--c-ink)", fontWeight: 500, marginTop: 4 }}>{request.base_note}</p>
+            </div>
+
+            <div style={{ background: "var(--c-ink)", padding: 24, borderRadius: "var(--r-md)", border: "1px solid rgba(255,255,255,0.1)", position: "relative", overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "linear-gradient(45deg, transparent, rgba(255,255,255,0.03))", pointerEvents: "none" }}></div>
+              <h4 style={{ fontSize: "0.8rem", color: "var(--c-gold)", marginBottom: 12, textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 600 }}>Technical Recipe</h4>
+              <p style={{ fontFamily: "monospace", color: "#e5e7eb", whiteSpace: "pre-wrap", fontSize: "0.95rem", lineHeight: 1.7 }}>
                 {request.ai_recipe?.admin_recipe}
               </p>
             </div>
@@ -142,51 +157,73 @@ export default function PesananKustomDetailPage() {
         </div>
 
         {/* Right Column - Pricing & Actions */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
           
-          <div className="card" style={{ background: "var(--c-surface-1)", border: "1px solid var(--c-gold-dim)" }}>
-            <h3 style={{ fontSize: "1.1rem", marginBottom: 16, color: "var(--c-ink)", display: "flex", justifyContent: "space-between" }}>
-              Kalkulasi Harga
-              <span style={{ fontSize: "0.8rem", padding: "4px 8px", borderRadius: "12px", background: request.status === 'pending' ? "rgba(234, 179, 8, 0.2)" : "rgba(59, 130, 246, 0.2)", color: request.status === 'pending' ? "#eab308" : "#3b82f6" }}>
+          <div className="card" style={{ padding: "32px", background: "var(--glass-bg)", backdropFilter: "blur(20px)", border: "1px solid var(--c-border)", boxShadow: "var(--shadow-float)" }}>
+            <h3 style={{ fontSize: "1.2rem", marginBottom: 24, color: "var(--c-ink)", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px dashed var(--c-border)", paddingBottom: 16 }}>
+              <span style={{ fontWeight: 700 }}>Kalkulasi Harga</span>
+              <span style={{ fontSize: "0.8rem", padding: "6px 14px", borderRadius: "var(--r-pill)", background: request.status === 'pending' ? "rgba(234, 179, 8, 0.15)" : "rgba(59, 130, 246, 0.15)", color: request.status === 'pending' ? "#eab308" : "#3b82f6", fontWeight: 700, letterSpacing: "1px", border: `1px solid ${request.status === 'pending' ? 'rgba(234, 179, 8, 0.3)' : 'rgba(59, 130, 246, 0.3)'}` }}>
                 {request.status.toUpperCase()}
               </span>
             </h3>
             
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              <div>
-                <label style={{ display: "block", fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 6 }}>Harga Bibit Parfum (Rp)</label>
-                <input 
-                  type="number" 
-                  value={pricePerfume} 
-                  onChange={(e) => setPricePerfume(Number(e.target.value))}
-                  className="input-field" 
-                  disabled={request.status !== 'pending' && request.status !== 'quoted'}
-                />
+            <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+              <div style={{ position: "relative" }}>
+                <label style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", color: "var(--c-ink)", marginBottom: 8, fontWeight: 500 }}>
+                  <span>Harga per ML (Rp)</span>
+                  <span style={{ color: "var(--c-gold)" }}>Ukuran: {request.volume_ml || 30}ml</span>
+                </label>
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--c-ink-muted)", fontWeight: 500 }}>Rp</span>
+                  <input 
+                    type="number" 
+                    value={pricePerMl} 
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setPricePerMl(val);
+                      setPricePerfume(val * (request.volume_ml || 30));
+                    }}
+                    className="input-field" 
+                    style={{ paddingLeft: 45, fontWeight: 600, background: "var(--c-surface-1)", border: "1px solid var(--c-gold-dim)" }}
+                    disabled={request.status !== 'pending' && request.status !== 'quoted'}
+                  />
+                </div>
+                <p style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)", marginTop: 8, textAlign: "right", fontWeight: 500 }}>Total Bibit: <span style={{ color: "var(--c-ink)", fontWeight: 700 }}>Rp {pricePerfume.toLocaleString('id-ID')}</span></p>
               </div>
+
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 6 }}>Harga Botol (Rp)</label>
-                <input 
-                  type="number" 
-                  value={priceBottle} 
-                  onChange={(e) => setPriceBottle(Number(e.target.value))}
-                  className="input-field" 
-                  disabled={request.status !== 'pending' && request.status !== 'quoted'}
-                />
+                <label style={{ display: "block", fontSize: "0.85rem", color: "var(--c-ink)", marginBottom: 8, fontWeight: 500 }}>Harga Botol (Rp)</label>
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--c-ink-muted)", fontWeight: 500 }}>Rp</span>
+                  <input 
+                    type="number" 
+                    value={priceBottle} 
+                    onChange={(e) => setPriceBottle(Number(e.target.value))}
+                    className="input-field" 
+                    style={{ paddingLeft: 45, background: "var(--c-surface-1)" }}
+                    disabled={request.status !== 'pending' && request.status !== 'quoted'}
+                  />
+                </div>
               </div>
+
               <div>
-                <label style={{ display: "block", fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 6 }}>Biaya Jasa / Ekstra (Rp)</label>
-                <input 
-                  type="number" 
-                  value={priceService} 
-                  onChange={(e) => setPriceService(Number(e.target.value))}
-                  className="input-field" 
-                  disabled={request.status !== 'pending' && request.status !== 'quoted'}
-                />
+                <label style={{ display: "block", fontSize: "0.85rem", color: "var(--c-ink)", marginBottom: 8, fontWeight: 500 }}>Biaya Jasa / Ekstra (Rp)</label>
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--c-ink-muted)", fontWeight: 500 }}>Rp</span>
+                  <input 
+                    type="number" 
+                    value={priceService} 
+                    onChange={(e) => setPriceService(Number(e.target.value))}
+                    className="input-field" 
+                    style={{ paddingLeft: 45, background: "var(--c-surface-1)" }}
+                    disabled={request.status !== 'pending' && request.status !== 'quoted'}
+                  />
+                </div>
               </div>
               
-              <div style={{ marginTop: 12, paddingTop: 16, borderTop: "1px dashed var(--c-border)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ color: "var(--c-ink-dim)" }}>Total Akhir</span>
-                <span style={{ fontSize: "1.4rem", fontWeight: 700, color: "var(--c-ink)" }}>
+              <div style={{ marginTop: 16, padding: "24px", background: "var(--c-surface-1)", borderRadius: "var(--r-md)", display: "flex", justifyContent: "space-between", alignItems: "center", border: "1px solid var(--c-gold-dim)" }}>
+                <span style={{ color: "var(--c-ink-dim)", textTransform: "uppercase", fontSize: "0.85rem", letterSpacing: "1px", fontWeight: 600 }}>Total Tagihan</span>
+                <span style={{ fontSize: "1.8rem", fontWeight: 700, color: "var(--c-gold)", fontFamily: "var(--font-display)" }}>
                   Rp {(Number(pricePerfume) + Number(priceBottle) + Number(priceService)).toLocaleString('id-ID')}
                 </span>
               </div>

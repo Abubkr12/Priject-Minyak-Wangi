@@ -21,6 +21,7 @@ export default function KustomRefillPage() {
   const [showOrderForm, setShowOrderForm] = useState(false);
   const [customerName, setCustomerName] = useState("");
   const [customerWA, setCustomerWA] = useState("");
+  const [volumeMl, setVolumeMl] = useState<number>(30);
   const [submittingOrder, setSubmittingOrder] = useState(false);
   
   const { dispatch } = useCart();
@@ -123,6 +124,7 @@ export default function KustomRefillPage() {
         customer_whatsapp: customerWA,
         base_note: baseNote === "Lainnya (Ketik Sendiri)" ? customBaseNote : baseNote,
         description,
+        volume_ml: volumeMl,
         ai_recipe: result
       };
       
@@ -331,6 +333,30 @@ export default function KustomRefillPage() {
                       className="input-field"
                     />
                     <p style={{ fontSize: "0.8rem", color: "var(--c-ink-muted)", marginTop: 8 }}>Admin akan menghubungi nomor ini untuk rincian harga (botol, dll) dan pembayaran.</p>
+                  </div>
+
+                  <div style={{ marginBottom: 24 }}>
+                    <label style={{ display: "block", fontSize: "0.85rem", marginBottom: 8, color: "var(--c-ink-dim)" }}>Pilih Ukuran Botol (ml)</label>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                      {[15, 30, 50, 100].map(size => (
+                        <button
+                          key={size}
+                          onClick={() => setVolumeMl(size)}
+                          style={{
+                            padding: "12px 8px",
+                            borderRadius: "var(--r-md)",
+                            background: volumeMl === size ? "var(--c-gold-dim)" : "var(--c-surface-1)",
+                            color: volumeMl === size ? "var(--c-gold)" : "var(--c-ink)",
+                            border: `1px solid ${volumeMl === size ? "var(--c-gold)" : "var(--c-border)"}`,
+                            fontWeight: volumeMl === size ? 600 : 400,
+                            cursor: "pointer",
+                            transition: "all 0.2s"
+                          }}
+                        >
+                          {size} ml
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <div style={{ display: "flex", gap: 12 }}>

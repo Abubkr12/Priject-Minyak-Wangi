@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { getSupabaseServer } from "@/lib/supabase-server";
+import { createServerSupabase } from "@/lib/supabase-server";
 
 export async function POST(req: Request) {
   try {
-    const supabase = await getSupabaseServer();
+    const supabase = await createServerSupabase();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
@@ -11,9 +11,9 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { customer_name, customer_whatsapp, base_note, description, ai_recipe } = body;
+    const { customer_name, customer_whatsapp, base_note, description, volume_ml, ai_recipe } = body;
 
-    if (!customer_name || !customer_whatsapp || !base_note || !description || !ai_recipe) {
+    if (!customer_name || !customer_whatsapp || !base_note || !description || !volume_ml || !ai_recipe) {
       return NextResponse.json({ error: "Semua data harus diisi" }, { status: 400 });
     }
 
@@ -26,6 +26,7 @@ export async function POST(req: Request) {
           customer_whatsapp,
           base_note,
           description,
+          volume_ml,
           ai_recipe
         }
       ])
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    const supabase = await getSupabaseServer();
+    const supabase = await createServerSupabase();
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     // Check if admin (optional check, assuming only admin access this, or use specific admin validation)
