@@ -92,7 +92,7 @@ FORMAT OUTPUT (HARUS JSON):
       });
       
       const resultText = response.text;
-      return NextResponse.json(JSON.parse(resultText));
+      return NextResponse.json(JSON.parse(resultText || "{}"));
     } catch (e: any) {
       console.error(`Model ${selectedModelName} failed:`, e.message);
       throw e;

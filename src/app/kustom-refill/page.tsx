@@ -24,7 +24,6 @@ export default function KustomRefillPage() {
   const [volumeMl, setVolumeMl] = useState<number>(30);
   const [submittingOrder, setSubmittingOrder] = useState(false);
   
-  const { dispatch } = useCart();
   const router = useRouter();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -151,11 +150,11 @@ export default function KustomRefillPage() {
 
   return (
     <div style={{ minHeight: "100vh", paddingBottom: "100px" }}>
-      <PageHeader 
-        title="Kustom Refill Parfum" 
-        subtitle="Racik aroma unik Anda sendiri dengan bantuan Master Perfumer AI kami."
-      />
-
+      <PageHeader />
+      <div className="container" style={{ textAlign: "center", marginTop: 40 }}>
+        <h1 style={{ fontSize: "2.5rem", fontWeight: 700, color: "var(--c-gold)", marginBottom: 8 }}>Kustom Refill Parfum</h1>
+        <p style={{ color: "var(--c-ink-dim)" }}>Racik aroma unik Anda sendiri dengan bantuan Master Perfumer AI kami.</p>
+      </div>
       <div className="container" style={{ maxWidth: 800, margin: "0 auto", marginTop: 40 }}>
         
         <div style={{ background: "var(--c-surface-1)", padding: 32, borderRadius: "var(--r-lg)", border: "1px solid var(--c-border)", marginBottom: 40 }}>

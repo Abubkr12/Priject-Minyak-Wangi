@@ -352,7 +352,7 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
                       <h3 className="perfume-card__name">{p.name}</h3>
                       <p className="perfume-card__mood">{p.mood}</p>
                       <div className="note-pills">
-                        {(Array.isArray(p.notes) ? p.notes : []).slice(0, 3).map((n) => (
+                        {(Array.isArray(p.notes) ? p.notes : []).slice(0, 3).map((n: any) => (
                           <span className="note-pill" key={n}>{n}</span>
                         ))}
                       </div>

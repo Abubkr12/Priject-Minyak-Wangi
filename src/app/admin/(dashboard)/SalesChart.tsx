@@ -39,7 +39,7 @@ export default function SalesChart({ data }: { data: { name: string, total: numb
           <Tooltip 
             cursor={{ fill: 'var(--c-border)' }}
             contentStyle={{ background: 'var(--glass-bg)', backdropFilter: 'blur(12px)', border: '1px solid var(--glass-border)', borderRadius: 'var(--r-md)', color: 'var(--c-ink)', boxShadow: 'var(--shadow-float)' }}
-            formatter={(value: number) => [formatRupiah(value), "Pendapatan"]}
+            formatter={(value: any) => [formatRupiah(Number(value) || 0), "Pendapatan"]}
             labelStyle={{ color: 'var(--c-ink-dim)', marginBottom: 4 }}
           />
           <Bar dataKey="total" fill="var(--c-gold)" radius={[4, 4, 0, 0]} maxBarSize={50} />

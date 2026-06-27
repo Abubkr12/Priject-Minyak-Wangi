@@ -69,8 +69,11 @@ export default function CustomCheckoutPage() {
 
   return (
     <div style={{ minHeight: "100vh", paddingBottom: 100 }}>
-      <PageHeader title="Pembayaran Pesanan Custom" subtitle="Selesaikan pembayaran agar racikan segera diproses" />
-
+      <PageHeader />
+      <div className="container" style={{ textAlign: "center", marginTop: 40 }}>
+        <h1 style={{ fontSize: "2.2rem", fontWeight: 700, color: "var(--c-gold)", marginBottom: 8 }}>Pembayaran Pesanan Custom</h1>
+        <p style={{ color: "var(--c-ink-dim)" }}>Selesaikan pembayaran agar racikan segera diproses</p>
+      </div>
       <div className="container" style={{ maxWidth: 600, margin: "0 auto", marginTop: 40 }}>
         
         {request.status !== "quoted" && request.status !== "pending" && (

@@ -164,7 +164,7 @@ export async function POST(request: Request) {
               temperature: 0.7,
             },
           });
-          return response.text;
+          return response.text || null;
         };
 
         try {
