@@ -55,7 +55,7 @@ export function ChatAdminClient({ initialChats }: { initialChats: Chat[] }) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'chat_messages' },
-        (payload) => {
+        (payload: any) => {
           const newMsg = payload.new as Message;
           
           setChats(prevChats => {
