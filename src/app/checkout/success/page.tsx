@@ -63,8 +63,8 @@ export default function CheckoutSuccessPage() {
         .select('*')
         .eq('is_active', true);
 
-      setBankMethods(methods?.filter((p) => p.type === 'bank_transfer') || []);
-      setQrisMethods(methods?.filter((p) => p.type === 'qris') || []);
+      setBankMethods(methods?.filter((p: any) => p.type === 'bank_transfer') || []);
+      setQrisMethods(methods?.filter((p: any) => p.type === 'qris') || []);
       setLoading(false);
     }
     loadData();

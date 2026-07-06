@@ -73,7 +73,7 @@ export function ChatWidget({ userId }: { userId?: string }) {
           .on(
             'postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `chat_id=eq.${currentChatId}` },
-            (payload) => {
+            (payload: any) => {
               setMessages((prev) => [...prev, payload.new as Message]);
             }
           )

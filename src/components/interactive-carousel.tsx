@@ -171,35 +171,35 @@ function CarouselItem({
     return diff;
   };
 
-  const x = useTransform(smoothProgress, (v) => {
-    const dist = getRelativeDistance(v);
+  const x = useTransform(smoothProgress, (v: any) => {
+    const dist = getRelativeDistance(v as number);
     return `${dist * 120}%`;
   });
 
-  const y = useTransform(smoothProgress, (v) => {
-    const dist = getRelativeDistance(v);
+  const y = useTransform(smoothProgress, (v: any) => {
+    const dist = getRelativeDistance(v as number);
     // Slight arc effect
     return `${Math.abs(dist) * 15}%`;
   });
 
-  const rotate = useTransform(smoothProgress, (v) => {
-    const dist = getRelativeDistance(v);
+  const rotate = useTransform(smoothProgress, (v: any) => {
+    const dist = getRelativeDistance(v as number);
     return `${dist * 15}deg`;
   });
 
-  const scale = useTransform(smoothProgress, (v) => {
-    const dist = Math.abs(getRelativeDistance(v));
+  const scale = useTransform(smoothProgress, (v: any) => {
+    const dist = Math.abs(getRelativeDistance(v as number));
     // Scale down items that are far away
     return Math.max(0.6, 1 - dist * 0.15);
   });
 
-  const zIndex = useTransform(smoothProgress, (v) => {
-    const dist = Math.abs(getRelativeDistance(v));
+  const zIndex = useTransform(smoothProgress, (v: any) => {
+    const dist = Math.abs(getRelativeDistance(v as number));
     return Math.round(100 - dist * 10);
   });
 
-  const opacity = useTransform(smoothProgress, (v) => {
-    const dist = Math.abs(getRelativeDistance(v));
+  const opacity = useTransform(smoothProgress, (v: any) => {
+    const dist = Math.abs(getRelativeDistance(v as number));
     return dist > 2.5 ? 0 : 1 - (dist * 0.2);
   });
 
