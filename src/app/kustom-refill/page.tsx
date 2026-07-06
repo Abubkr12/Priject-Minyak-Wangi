@@ -12,6 +12,7 @@ export default function KustomRefillPage() {
   const [baseNote, setBaseNote] = useState("Bebas (Pilihkan untuk saya)");
   const [customBaseNote, setCustomBaseNote] = useState("");
   const [description, setDescription] = useState("");
+  const [ratio, setRatio] = useState("auto");
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imageName, setImageName] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -77,6 +78,7 @@ export default function KustomRefillPage() {
         body: JSON.stringify({ 
           baseNote: baseNote === "Lainnya (Ketik Sendiri)" ? customBaseNote : baseNote, 
           description, 
+          ratio,
           imageBase64 
         })
       });
@@ -124,7 +126,7 @@ export default function KustomRefillPage() {
         base_note: baseNote === "Lainnya (Ketik Sendiri)" ? customBaseNote : baseNote,
         description,
         volume_ml: volumeMl,
-        ai_recipe: result
+        ai_recipe: { ...result, ratio }
       };
       
       const res = await fetch("/api/custom-requests", {
@@ -181,6 +183,21 @@ export default function KustomRefillPage() {
                 style={{ width: "100%", padding: "14px 16px", borderRadius: "var(--r-md)", background: "var(--c-surface-2)", border: "1px solid var(--c-border)", color: "var(--c-ink)", fontSize: "1rem", marginTop: "12px" }}
               />
             )}
+          </div>
+
+          <div style={{ marginBottom: 24 }}>
+            <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, color: "var(--c-ink-dim)", marginBottom: 8, textTransform: "uppercase", letterSpacing: "1px" }}>
+              Kekuatan Aroma (Rasio Bibit)
+            </label>
+            <select 
+              value={ratio} 
+              onChange={(e) => setRatio(e.target.value)}
+              style={{ width: "100%", padding: "14px 16px", borderRadius: "var(--r-md)", background: "var(--c-surface-2)", border: "1px solid var(--c-border)", color: "var(--c-ink)", fontSize: "1rem" }}
+            >
+              <option value="auto">Auto (Biar AI yang Pilihkan)</option>
+              <option value="50/50">50/50 - Standar (Wangi Pas & Terjangkau)</option>
+              <option value="70/30">70/30 - Extrait (Super Kuat & Tahan Lama)</option>
+            </select>
           </div>
 
           <div style={{ marginBottom: 24 }}>
@@ -283,7 +300,7 @@ export default function KustomRefillPage() {
 
               {/* Note for seller, hidden visually but sent in order, or we can show it as technical notes */}
               <div style={{ padding: 16, background: "rgba(0,0,0,0.2)", borderRadius: "var(--r-md)", border: "1px dashed var(--c-border)", marginBottom: 32 }}>
-                <h4 style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "1px", color: "var(--c-ink-muted)", marginBottom: 8, fontWeight: 600 }}>Technical Recipe (For Seller)</h4>
+                <h4 style={{ fontSize: "0.8rem", textTransform: "uppercase", letterSpacing: "1px", color: "var(--c-ink-muted)", marginBottom: 8, fontWeight: 600 }}>Technical Recipe</h4>
                 <p style={{ fontSize: "0.9rem", color: "var(--c-ink-muted)", fontFamily: "monospace" }}>
                   {result.admin_recipe}
                 </p>

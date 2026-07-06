@@ -23,10 +23,7 @@ export function ChatWidget({ userId }: { userId?: string }) {
   const supabase = createClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Jangan tampilkan di halaman admin
-  if (pathname.startsWith('/admin')) {
-    return null;
-  }
+  // Removed early return to prevent hook order mismatch
 
   // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
@@ -113,7 +110,8 @@ export function ChatWidget({ userId }: { userId?: string }) {
     setLoading(false);
   };
 
-  if (!userId) return null; // Harus login untuk chat
+  // Harus login untuk chat dan jangan tampilkan di halaman admin
+  if (!userId || pathname.startsWith('/admin')) return null;
 
   return (
     <>

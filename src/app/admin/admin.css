@@ -1,0 +1,325 @@
+/* Pro Sidebar Admin Styles Adapted for React */
+
+.admin-layout {
+  z-index: 1;
+}
+
+.pro-sidebar {
+  color: var(--c-ink-dim);
+  position: relative;
+  transition: width 0.3s;
+  width: 260px;
+  min-width: 260px;
+  border-right: 1px solid var(--c-border);
+  z-index: 10;
+}
+
+.pro-sidebar::-webkit-scrollbar-thumb {
+  border-radius: 4px;
+}
+.pro-sidebar:hover::-webkit-scrollbar-thumb {
+  background-color: var(--c-border);
+}
+.pro-sidebar::-webkit-scrollbar {
+  width: 6px;
+  background-color: transparent;
+}
+
+.pro-sidebar .sidebar-layout {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background-color: var(--c-surface-1);
+  z-index: 2;
+  overflow-x: hidden;
+}
+
+.pro-sidebar .sidebar-header {
+  height: 72px;
+  min-height: 72px;
+  display: flex;
+  align-items: center;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.pro-sidebar .sidebar-header > span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.pro-sidebar .sidebar-content {
+  flex-grow: 1;
+  padding: 10px 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.pro-sidebar.collapsed .sidebar-content,
+.pro-sidebar.collapsed .sidebar-layout {
+  overflow-y: visible;
+  overflow-x: visible;
+}
+
+.pro-sidebar .sidebar-footer {
+  padding: 20px;
+  border-top: 1px solid var(--c-border);
+}
+
+@keyframes swing {
+  0%, 30%, 50%, 70%, 100% {
+    transform: rotate(0deg);
+  }
+  10% { transform: rotate(10deg); }
+  40% { transform: rotate(-10deg); }
+  60% { transform: rotate(5deg); }
+  80% { transform: rotate(-5deg); }
+}
+
+.pro-sidebar .menu ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pro-sidebar .menu .menu-header {
+  font-weight: 600;
+  padding: 10px 25px;
+  font-size: 0.75em;
+  letter-spacing: 2px;
+  transition: opacity 0.3s;
+  opacity: 0.5;
+  margin-top: 10px;
+}
+
+.pro-sidebar .menu .menu-item > a {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  padding: 0 20px;
+  color: var(--c-ink-dim);
+  transition: background-color 0.2s, color 0.2s;
+  cursor: pointer;
+}
+
+.pro-sidebar .menu .menu-item > a .menu-icon {
+  font-size: 1.2rem;
+  width: 35px;
+  min-width: 35px;
+  height: 35px;
+  line-height: 35px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  border-radius: 4px;
+  transition: color 0.3s, background-color 0.3s;
+}
+
+.pro-sidebar .menu .menu-item > a .menu-title {
+  font-size: 0.9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+  transition: color 0.3s;
+  font-weight: 500;
+}
+
+.pro-sidebar .menu .menu-item > a:hover {
+  background-color: var(--glass-bg);
+}
+
+.pro-sidebar .menu .menu-item > a:hover .menu-title {
+  color: var(--c-ink);
+}
+
+.pro-sidebar .menu .menu-item > a:hover .menu-icon {
+  color: var(--c-ink);
+}
+
+.pro-sidebar .menu .menu-item > a:hover .menu-icon svg {
+  animation: swing ease-in-out 0.5s 1 alternate;
+}
+
+.pro-sidebar .menu .menu-item.active > a {
+  color: var(--c-gold);
+}
+.pro-sidebar .menu .menu-item.active > a .menu-title {
+  color: var(--c-gold);
+}
+.pro-sidebar .menu .menu-item.active > a .menu-icon {
+  color: var(--c-gold);
+  background-color: var(--glass-bg);
+}
+
+/* Sub menu arrow */
+.pro-sidebar .menu .menu-item.sub-menu > a::after {
+  content: '';
+  transition: transform 0.3s;
+  border-right: 2px solid currentcolor;
+  border-bottom: 2px solid currentcolor;
+  width: 6px;
+  height: 6px;
+  transform: rotate(-45deg);
+  margin-left: auto;
+}
+
+.pro-sidebar .menu .menu-item.sub-menu.open > a::after {
+  transform: rotate(45deg);
+}
+
+.pro-sidebar .menu .menu-item.sub-menu > .sub-menu-list {
+  padding-left: 20px;
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.pro-sidebar .menu .menu-item.sub-menu.open > .sub-menu-list {
+  max-height: 500px;
+}
+
+.pro-sidebar .menu .sub-menu-list .menu-item > a {
+  height: 40px;
+  padding-left: 35px;
+  font-size: 0.85em;
+}
+
+/* Collapsed State */
+.pro-sidebar.collapsed {
+  width: 80px;
+  min-width: 80px;
+}
+
+.pro-sidebar.collapsed .sidebar-header {
+  padding: 0;
+  justify-content: center;
+}
+
+.pro-sidebar.collapsed .sidebar-header h5 {
+  display: none;
+}
+
+.pro-sidebar.collapsed .menu-header {
+  opacity: 0;
+  height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+.pro-sidebar.collapsed .menu-item > a {
+  padding: 0;
+  justify-content: center;
+}
+
+.pro-sidebar.collapsed .menu-item > a .menu-icon {
+  margin-right: 0;
+}
+
+.pro-sidebar.collapsed .menu-item > a .menu-title,
+.pro-sidebar.collapsed .menu-item > a::after {
+  display: none;
+}
+
+.pro-sidebar.collapsed .sub-menu-list {
+  display: none !important;
+}
+
+.pro-sidebar.collapsed .menu-item.sub-menu {
+  position: relative;
+}
+
+.pro-sidebar.collapsed .menu-item.sub-menu.open > .sub-menu-list {
+  display: block !important;
+  position: absolute;
+  left: 80px;
+  top: 0;
+  width: 220px;
+  background-color: var(--c-surface-1);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  z-index: 9999;
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  padding: 8px 0;
+}
+
+.pro-sidebar.collapsed .sub-menu-list .menu-item > a .menu-title {
+  display: block !important;
+}
+
+.pro-sidebar.collapsed .sub-menu-list .menu-item > a {
+  padding: 8px 20px;
+  justify-content: flex-start;
+  height: auto;
+}
+
+.pro-sidebar.collapsed .sub-menu-list .menu-item > a::after {
+  display: none;
+}
+
+/* Logo specific styles */
+.pro-sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pro-sidebar-logo .logo-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: #000;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background-color: var(--c-gold);
+}
+
+.pro-sidebar-logo h5 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--c-ink);
+  white-space: nowrap;
+}
+
+/* Collapse Toggle Button */
+.sidebar-collapser {
+  position: absolute;
+  right: -12px;
+  top: 24px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--c-gold);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+}
+
+.pro-sidebar.collapsed .sidebar-collapser {
+  transform: rotate(180deg);
+}
+
+/* Content layout */
+.admin-content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}

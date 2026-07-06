@@ -14,13 +14,19 @@ import {
   Send,
   ShoppingBag,
   Sparkles,
-  X
+  X,
+  Check,
+  Beaker
 } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Footer } from "@/components/footer";
+import { FadeIn } from "@/components/fade-in";
+import { InteractiveCarousel } from "@/components/interactive-carousel";
 import { useCart } from "@/lib/cart-context";
 import { getMinPrice, formatRupiah } from "@/lib/types";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
 
 type ChatMessage = {
   role: "assistant" | "user";
@@ -45,6 +51,10 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
   const [requestText, setRequestText] = useState("");
   const [selectedSize, setSelectedSize] = useState("30ml");
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [resultAI, setResultAI] = useState<any>(null);
+  const [isRequestSubmitted, setIsRequestSubmitted] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [heroIndex, setHeroIndex] = useState(0);
   const chatLogRef = useRef<HTMLDivElement>(null);
@@ -115,27 +125,72 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
     }
   }
 
-  function handleRequestSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleRequestSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const clean = requestText.trim();
-    if (!clean) return;
+    if (!clean && !uploadedFile) {
+      toast.error("Mohon isi deskripsi atau unggah gambar referensi.");
+      return;
+    }
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        role: "assistant",
-        text: `Request custom berhasil dicatat untuk ukuran ${selectedSize}${uploadedFile ? " dengan gambar referensi" : ""}. Admin akan segera merespons dan menghubungi Anda.`
-      }
-    ]);
-    setRequestText("");
-    setUploadedFile(null);
+    setLoadingAI(true);
+    setResultAI(null);
+
+    try {
+      const res = await fetch("/api/refill-advisor", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          baseNote: "Bebas (Pilihkan untuk saya)", 
+          description: clean, 
+          ratio: "auto",
+          imageBase64 
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Gagal mendapatkan rekomendasi");
+
+      setResultAI(data);
+      toast.success("Rekomendasi racikan berhasil dibuat!");
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setLoadingAI(false);
+    }
   }
-
-
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (file) setUploadedFile(file.name);
+    if (!file) return;
+    
+    setUploadedFile(file.name);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx?.drawImage(img, 0, 0, width, height);
+        
+        const compressedBase64 = canvas.toDataURL("image/jpeg", 0.7);
+        setImageBase64(compressedBase64);
+      };
+      img.src = event.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   }
 
   return (
@@ -237,7 +292,7 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
             </p>
 
             <div className="hero__actions">
-              <Link href="/kustom-refill" className="btn btn-primary">
+              <Link href="/refill" className="btn btn-primary">
                 <Sparkles size={17} />
                 Racik Refill Custom
               </Link>
@@ -248,8 +303,9 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
             </div>
           </div>
 
-          <div className="hero__metrics" aria-label="Statistik toko">
-            <div className="hero__metric">
+          <FadeIn delay={0.2}>
+            <div className="hero__metrics" aria-label="Statistik toko">
+              <div className="hero__metric">
               <span className="hero__metric-value">{serverPerfumes.length}+</span>
               <span className="hero__metric-label">Racikan tersedia</span>
             </div>
@@ -261,9 +317,12 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
               <span className="hero__metric-value">30ml</span>
               <span className="hero__metric-label">Ukuran favorit</span>
             </div>
-          </div>
+            </div>
+          </FadeIn>
         </div>
       </section>
+
+      <InteractiveCarousel featuredPerfumes={serverPerfumes.filter((p) => p.is_featured)} />
 
       {/* CATALOG + SIDEBAR */}
       <div className="workspace" id="catalog">
@@ -271,6 +330,7 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
 
           {/* LEFT: Catalog */}
           <div className="catalog-col">
+            <FadeIn delay={0.1}>
             {/* Search + filter bar */}
             <div style={{ display: "flex", gap: 10, marginBottom: 20, alignItems: "center" }}>
               <label className="search-wrapper" style={{ flex: 1 }}>
@@ -372,11 +432,12 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
                 )})}
               </div>
             )}
+            </FadeIn>
           </div>
 
           {/* RIGHT: AI + Request */}
           <aside className="sidebar-col" id="assistant" aria-label="Panel asisten dan request">
-
+            <FadeIn delay={0.3}>
             {/* AI Assistant */}
             <div className="assistant-card">
               <div className="assistant-header">
@@ -432,6 +493,63 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
             </div>
 
             {/* Custom Request */}
+            {isRequestSubmitted ? (
+              <motion.div 
+                className="request-card" id="request"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", padding: "3rem 1.5rem" }}
+              >
+                <div style={{ width: 56, height: 56, borderRadius: "50%", background: "var(--c-gold-dim)", color: "var(--c-gold)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 20 }}>
+                  <Check size={28} />
+                </div>
+                <h3 style={{ fontSize: "1.2rem", fontWeight: 600, color: "var(--c-ink)", marginBottom: 8 }}>Request Diterima!</h3>
+                <p style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 24, lineHeight: 1.5 }}>
+                  Brief racikan Anda telah kami terima. Tim expert kami akan segera memproses dan menghubungi Anda.
+                </p>
+                <button 
+                  type="button" 
+                  className="btn btn-outline" 
+                  onClick={() => {
+                    setIsRequestSubmitted(false);
+                    setResultAI(null);
+                    setRequestText("");
+                    setUploadedFile(null);
+                    setImageBase64(null);
+                  }}
+                  style={{ width: "100%" }}
+                >
+                  Buat Request Baru
+                </button>
+              </motion.div>
+            ) : resultAI ? (
+              <motion.div 
+                className="request-card" id="request"
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", background: "var(--c-gold-dim)", color: "var(--c-gold)", borderRadius: "var(--r-pill)", fontSize: "0.8rem", fontWeight: 600, alignSelf: "flex-start" }}>
+                  <Sparkles size={14} /> AI Master Perfumer
+                </div>
+                <h3 style={{ fontSize: "1.4rem", fontFamily: "var(--font-display)", color: "var(--c-ink)", margin: "8px 0" }}>
+                  {resultAI.name_suggestion}
+                </h3>
+                <div style={{ background: "var(--c-surface-1)", padding: "16px", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
+                  <h4 style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "1px", color: "var(--c-ink-dim)", marginBottom: 8, fontWeight: 600 }}>Gambaran Aroma</h4>
+                  <p style={{ fontSize: "0.95rem", color: "var(--c-ink)", fontStyle: "italic", margin: 0, lineHeight: 1.5 }}>"{resultAI.customer_description}"</p>
+                </div>
+                <div style={{ padding: 16, background: "rgba(0,0,0,0.2)", borderRadius: "var(--r-md)", border: "1px dashed var(--c-border)", marginTop: 12 }}>
+                  <h4 style={{ fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "1px", color: "var(--c-ink-muted)", marginBottom: 8, fontWeight: 600 }}>Technical Recipe</h4>
+                  <p style={{ fontSize: "0.85rem", color: "var(--c-ink-muted)", fontFamily: "monospace", margin: 0, lineHeight: 1.5 }}>
+                    {resultAI.admin_recipe}
+                  </p>
+                </div>
+                <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
+                  <button type="button" className="btn btn-outline" style={{ flex: 1 }} onClick={() => setResultAI(null)}>Coba Lagi</button>
+                  <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => setIsRequestSubmitted(true)}>Konfirmasi & Pesan</button>
+                </div>
+              </motion.div>
+            ) : (
             <form className="request-card" onSubmit={handleRequestSubmit} id="request">
               <div className="request-card__header">
                 <div>
@@ -457,17 +575,29 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
               </div>
 
               {uploadedFile && (
-                <div style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "8px 12px", background: "var(--c-gold-dim)",
-                  border: "1px solid rgba(201,168,76,0.25)", borderRadius: "var(--r-sm)",
-                  fontSize: "0.8rem", color: "var(--c-gold-light)"
-                }}>
-                  <span>{uploadedFile}</span>
-                  <button type="button" onClick={() => setUploadedFile(null)} aria-label="Hapus file">
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "8px 12px", background: "var(--c-gold-dim)",
+                    border: "1px solid rgba(201,168,76,0.25)", borderRadius: "var(--r-sm)",
+                    fontSize: "0.8rem", color: "var(--c-gold-light)",
+                    width: "100%", gap: "8px"
+                  }}
+                >
+                  <span style={{ 
+                    overflow: "hidden", 
+                    textOverflow: "ellipsis", 
+                    whiteSpace: "nowrap",
+                    flex: 1
+                  }}>
+                    {uploadedFile}
+                  </span>
+                  <button type="button" onClick={() => setUploadedFile(null)} aria-label="Hapus file" style={{ flexShrink: 0 }}>
                     <X size={14} />
                   </button>
-                </div>
+                </motion.div>
               )}
 
               {!uploadedFile && (
@@ -512,12 +642,14 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
                 aria-label="Deskripsi request racikan"
               />
 
-              <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>
-                <ChevronRight size={17} />
-                Kirim Request
+              <button type="submit" className="btn btn-primary" style={{ width: "100%" }} disabled={loadingAI}>
+                {loadingAI ? "Menganalisis..." : (
+                  <><Sparkles size={17} /> Minta Rekomendasi AI</>
+                )}
               </button>
             </form>
-
+            )}
+            </FadeIn>
           </aside>
         </div>
       </div>

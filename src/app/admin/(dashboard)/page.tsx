@@ -5,6 +5,8 @@ import SalesChart from "./SalesChart";
 
 export default async function AdminDashboard() {
   const supabase = await createClient(true);
+  const { data: { user } } = await supabase.auth.getUser();
+  const userName = user?.user_metadata?.full_name || 'Admin';
 
   // Fetch some quick stats
   const { data: orders } = await supabase.from("orders").select("total, status, created_at").neq('status', 'cancelled');
@@ -36,7 +38,7 @@ export default async function AdminDashboard() {
     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
       <div>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--c-ink)", fontWeight: 400, marginBottom: 8 }}>
-          Selamat Datang, Komandan!
+          Selamat Datang, {userName}!
         </h1>
         <p style={{ color: "var(--c-ink-dim)" }}>Berikut adalah ringkasan performa toko Anda hari ini.</p>
       </div>

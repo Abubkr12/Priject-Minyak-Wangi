@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Save, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
+import { getStoreSettings } from "../../pengaturan/api/actions";
 
 export default function PesananKustomDetailPage() {
   const params = useParams();
@@ -31,14 +32,39 @@ export default function PesananKustomDetailPage() {
       const res = await fetch(`/api/custom-requests/${id}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
-      setRequest(data.data);
-      // Initialize prices, or if it's already set from DB, we use DB. But for new pending orders, pricePerfume is 0.
-      setPricePerfume(data.data.price_perfume || 0);
-      if (data.data.price_perfume && data.data.volume_ml) {
-        setPricePerMl(data.data.price_perfume / data.data.volume_ml);
+      const reqData = data.data;
+      setRequest(reqData);
+
+      let initialPerfume = reqData.price_perfume || 0;
+
+      // If pending and no price set, auto calculate
+      if (reqData.status === 'pending' && !reqData.price_perfume) {
+        const settings = await getStoreSettings();
+        const settingsMap: Record<string, string> = {};
+        settings.forEach((s: any) => settingsMap[s.key] = s.value);
+        
+        const hBibit = Number(settingsMap.HARGA_BIBIT_PER_ML || 1500);
+        const hPelarut = Number(settingsMap.HARGA_PELARUT_PER_ML || 500);
+        
+        const volume = reqData.volume_ml || 30;
+        const ratio = reqData.ai_recipe?.ratio || '50/50';
+        
+        let pctBibit = 0.5;
+        if (ratio === '70/30') pctBibit = 0.7;
+        else if (ratio === 'auto') pctBibit = 0.5; // fallback for auto if not decided
+        
+        const mlBibit = volume * pctBibit;
+        const mlPelarut = volume * (1 - pctBibit);
+        
+        initialPerfume = (mlBibit * hBibit) + (mlPelarut * hPelarut);
       }
-      setPriceBottle(data.data.price_bottle || 0);
-      setPriceService(data.data.price_service || 0);
+
+      setPricePerfume(initialPerfume);
+      if (initialPerfume && reqData.volume_ml) {
+        setPricePerMl(Math.round(initialPerfume / reqData.volume_ml));
+      }
+      setPriceBottle(reqData.price_bottle || 0);
+      setPriceService(reqData.price_service || 0);
     } catch (err: any) {
       toast.error(err.message || "Gagal memuat detail");
     } finally {

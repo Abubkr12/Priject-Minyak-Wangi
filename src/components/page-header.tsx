@@ -10,6 +10,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 const navLinks = [
   { label: "Beranda", href: "/" },
   { label: "Katalog", href: "/katalog" },
+  { label: "Refill", href: "/refill" },
   { label: "Tentang", href: "/about" },
   { label: "Kontak", href: "/kontak" },
   { label: "FAQ", href: "/faq" },

@@ -25,6 +25,9 @@ export async function updateSession(request: NextRequest) {
         },
       },
       cookieOptions: request.nextUrl.pathname.startsWith('/admin') ? { name: 'sb-admin-auth-token' } : undefined,
+      auth: request.nextUrl.pathname.startsWith('/admin') ? {
+        storageKey: 'sb-admin-auth-token',
+      } : undefined
     }
   )
 

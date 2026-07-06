@@ -81,7 +81,10 @@ export default function CustomCheckoutPage() {
             <CheckCircle2 size={48} style={{ margin: "0 auto 16px" }} />
             <h2 style={{ fontSize: "1.2rem", fontWeight: 600, marginBottom: 8 }}>Pesanan Sudah Dibayar</h2>
             <p>Terima kasih. Pesanan Anda sedang diproses oleh admin.</p>
-            <Link href="/" className="btn btn-outline" style={{ marginTop: 16 }}>Kembali ke Beranda</Link>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 16 }}>
+              <Link href="/" className="btn btn-outline">Kembali ke Beranda</Link>
+              <Link href={`/pesanan/invoice/custom/${id}`} target="_blank" className="btn btn-primary" style={{ padding: '0 24px', borderRadius: 100 }}>Lihat Invoice</Link>
+            </div>
           </div>
         )}
 

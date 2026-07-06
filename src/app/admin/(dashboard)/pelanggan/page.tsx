@@ -1,72 +1,66 @@
-import { createClient } from "@/lib/supabase/server";
-import { Users, Search, Mail, Calendar } from "lucide-react";
+import { createAdminClient } from "@/lib/supabase/admin";
+import PelangganClient from "./PelangganClient";
+
+export const dynamic = 'force-dynamic';
 
 export default async function PelangganPage() {
-  const supabase = await createClient(true);
+  const supabase = createAdminClient();
   
-  // Ambil data pelanggan dari auth.users dan profiles jika ada
-  // Namun, kita tidak bisa langsung query auth.users dari client/server tanpa service role
-  // Sebagai gantinya, kita bisa query tabel profiles yang biasanya terkait
-  const { data: profiles } = await supabase.from('customer_profiles').select('*').order('created_at', { ascending: false });
+  // 1. Ambil data autentikasi pengguna (email, last_sign_in_at)
+  const { data: authData, error: authError } = await supabase.auth.admin.listUsers();
+  const authUsers = authData?.users || [];
+
+  // 2. Ambil profil pelanggan
+  const { data: profiles } = await supabase.from('customer_profiles').select('*');
+  const profileList = profiles || [];
+
+  // 3. Ambil riwayat pesanan (untuk menghitung order atau lihat riwayat)
+  const { data: orders } = await supabase.from('orders').select('id, order_code, total, status, created_at, customer_id').order('created_at', { ascending: false });
+  const orderList = orders || [];
+
+  // 4. Ambil daftar karyawan (untuk difilter)
+  const { data: adminUsers } = await supabase.from('admin_users').select('id');
+  const adminIds = new Set((adminUsers || []).map(a => a.id));
+
+  // 5. Ambil data alamat
+  const { data: addresses } = await supabase.from('customer_addresses').select('*').order('is_default', { ascending: false });
+  const addressList = addresses || [];
+
+  // 6. Gabungkan data
+  const customers = authUsers
+    .filter(user => !adminIds.has(user.id)) // Filter out employees
+    .map(user => {
+    const profile = profileList.find(p => p.id === user.id) || {};
+    const userOrders = orderList.filter(o => o.customer_id === user.id);
+    const userAddresses = addressList.filter(a => a.customer_id === user.id);
+
+    return {
+      id: user.id,
+      email: user.email || "",
+      last_sign_in_at: user.last_sign_in_at,
+      full_name: profile.full_name || "",
+      phone: profile.phone || "",
+      address: profile.address || "",
+      city: profile.city || "",
+      province: profile.province || "",
+      postal_code: profile.postal_code || "",
+      created_at: profile.created_at || user.created_at,
+      avatar_url: profile.avatar_url || "",
+      orders: userOrders,
+      addresses: userAddresses
+    };
+  });
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.8rem", color: "var(--c-ink)", marginBottom: 8 }}>
-            Pelanggan
-          </h1>
-          <p style={{ color: "var(--c-ink-dim)" }}>Kelola data pelanggan dan lihat riwayat aktivitas mereka.</p>
-        </div>
+      <div>
+        <h1 style={{ fontFamily: "var(--font-display)", fontSize: "1.8rem", color: "var(--c-ink)", marginBottom: 8 }}>
+          Pelanggan
+        </h1>
+        <p style={{ color: "var(--c-ink-dim)" }}>Kelola data pelanggan, pantau aktivitas pesanan, dan lihat riwayat login mereka.</p>
       </div>
 
-      <div style={{ background: "var(--c-surface-1)", border: "1px solid var(--c-border)", borderRadius: "var(--r-lg)", overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-          <thead style={{ background: "var(--c-surface-2)", borderBottom: "1px solid var(--c-border)" }}>
-            <tr>
-              <th style={{ padding: "16px 24px", color: "var(--c-ink-dim)", fontWeight: 600, fontSize: "0.85rem", textTransform: "uppercase" }}>Pelanggan</th>
-              <th style={{ padding: "16px 24px", color: "var(--c-ink-dim)", fontWeight: 600, fontSize: "0.85rem", textTransform: "uppercase" }}>No. Telepon</th>
-              <th style={{ padding: "16px 24px", color: "var(--c-ink-dim)", fontWeight: 600, fontSize: "0.85rem", textTransform: "uppercase" }}>Tanggal Lahir</th>
-              <th style={{ padding: "16px 24px", color: "var(--c-ink-dim)", fontWeight: 600, fontSize: "0.85rem", textTransform: "uppercase" }}>Bergabung Pada</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!profiles || profiles.length === 0 ? (
-              <tr>
-                <td colSpan={4} style={{ padding: "32px", textAlign: "center", color: "var(--c-ink-dim)" }}>
-                  Belum ada data pelanggan.
-                </td>
-              </tr>
-            ) : (
-              profiles.map((profile: any) => (
-                <tr key={profile.id} style={{ borderBottom: "1px solid var(--c-border)" }}>
-                  <td style={{ padding: "16px 24px", color: "var(--c-ink)" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--glass-bg)", border: "1px solid var(--c-border)", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                        {profile.avatar_url ? (
-                          <img src={profile.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                        ) : (
-                          <Users size={16} style={{ color: "var(--c-ink-dim)" }} />
-                        )}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 500 }}>{profile.full_name || "Tanpa Nama"}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td style={{ padding: "16px 24px", color: "var(--c-ink)" }}>{profile.phone || "-"}</td>
-                  <td style={{ padding: "16px 24px", color: "var(--c-ink)" }}>
-                    {profile.birth_date ? new Date(profile.birth_date).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' }) : "-"}
-                  </td>
-                  <td style={{ padding: "16px 24px", color: "var(--c-ink-dim)", fontSize: "0.9rem" }}>
-                    {new Date(profile.created_at).toLocaleDateString("id-ID")}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <PelangganClient customers={customers} />
     </div>
   );
 }

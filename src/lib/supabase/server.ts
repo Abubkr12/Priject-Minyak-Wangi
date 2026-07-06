@@ -25,6 +25,9 @@ export async function createClient(isAdmin = false) {
         },
       },
       cookieOptions: isAdmin ? { name: 'sb-admin-auth-token' } : undefined,
+      auth: isAdmin ? {
+        storageKey: 'sb-admin-auth-token',
+      } : undefined
     }
   )
 }

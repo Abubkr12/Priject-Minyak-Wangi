@@ -152,8 +152,11 @@ export default async function PesananPage() {
                           
                           <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px dashed var(--c-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ color: 'var(--c-ink-muted)' }}>Total Belanja</div>
-                            <div style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--c-gold)' }}>
-                              {formatRupiah(order.total)}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                              <Link href={`/pesanan/invoice/${order.id}`} target="_blank" className="btn btn-outline" style={{ padding: '4px 16px', fontSize: '0.85rem', height: '32px' }}>Lihat Invoice</Link>
+                              <div style={{ fontSize: '1.2rem', fontWeight: 600, color: 'var(--c-gold)' }}>
+                                {formatRupiah(order.total)}
+                              </div>
                             </div>
                           </div>
 

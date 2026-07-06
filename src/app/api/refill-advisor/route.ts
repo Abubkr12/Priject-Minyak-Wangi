@@ -5,7 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { baseNote, description, imageBase64 } = body;
+    const { baseNote, description, ratio, imageBase64 } = body;
 
     const supabase = createAdminClient();
     
@@ -33,6 +33,7 @@ Tugasmu adalah meracik parfum kustom berdasarkan permintaan pelanggan.
 
 INPUT DARI PELANGGAN:
 - Base Note Utama: ${baseNote || 'Tidak spesifik'}
+- Kekuatan/Rasio Bibit: ${ratio === 'auto' ? 'Pilihkan yang terbaik sesuai deskripsi' : ratio}
 - Deskripsi/Keinginan: ${description || 'Tidak ada deskripsi'}
 ${imageBase64 ? '- Pelanggan juga mengunggah gambar referensi parfum (analisis gambar tersebut).' : ''}
 
@@ -61,8 +62,8 @@ FORMAT OUTPUT (HARUS JSON):
       }
     }
 
-    // Dynamic model selection strategy (Transkrip Audio style)
-    let selectedModelName = "gemini-1.5-flash"; // default fallback
+    // Dynamic model selection strategy (Fallback Loop)
+    let modelList: string[] = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
     try {
       const modelsResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
       const modelsData = await modelsResp.json();
@@ -71,32 +72,40 @@ FORMAT OUTPUT (HARUS JSON):
           .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
           .filter((m: any) => m.name.includes('gemini') && m.name.includes('flash'))
           .filter((m: any) => !m.name.includes('tts') && !m.name.includes('vision') && !m.name.includes('image') && !m.name.includes('embedding') && !m.name.includes('live'))
-          .sort((a: any, b: any) => b.name.localeCompare(a.name));
+          .sort((a: any, b: any) => b.name.localeCompare(a.name)); // as in Transkrip Audio
           
         if (availableFlashModels.length > 0) {
-          selectedModelName = availableFlashModels[0].name.replace('models/', '');
+          modelList = availableFlashModels.map((m: any) => m.name.replace('models/', ''));
         }
       }
     } catch (e) {
-      console.warn("Failed to fetch models dynamically, using default:", e);
+      console.warn("Failed to fetch models dynamically, using default fallback list:", e);
     }
 
-    try {
-      const response = await ai.models.generateContent({
-        model: selectedModelName,
-        contents: promptContents,
-        config: {
-          responseMimeType: "application/json",
-          temperature: 0.7
-        }
-      });
-      
-      const resultText = response.text;
-      return NextResponse.json(JSON.parse(resultText || "{}"));
-    } catch (e: any) {
-      console.error(`Model ${selectedModelName} failed:`, e.message);
-      throw e;
+    let lastError: any;
+    for (const modelName of modelList) {
+      try {
+        console.log(`Mencoba menggunakan model: ${modelName}`);
+        const response = await ai.models.generateContent({
+          model: modelName,
+          contents: promptContents,
+          config: {
+            responseMimeType: "application/json",
+            temperature: 0.7
+          }
+        });
+        
+        const resultText = response.text;
+        return NextResponse.json(JSON.parse(resultText || "{}"));
+      } catch (e: any) {
+        console.warn(`Model ${modelName} gagal:`, e.message);
+        lastError = e;
+        // Continue loop to try the next model
+      }
     }
+
+    // If we reach here, all models failed
+    throw lastError || new Error("Semua model Gemini gagal dihubungi");
 
   } catch (error: any) {
     console.error("Refill Advisor API Error:", error);
