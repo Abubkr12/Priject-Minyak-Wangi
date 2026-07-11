@@ -234,7 +234,7 @@
   position: relative;
 }
 
-.pro-sidebar.collapsed .menu-item.sub-menu.open > .sub-menu-list {
+.pro-sidebar.collapsed .menu-item.sub-menu:hover > .sub-menu-list {
   display: block !important;
   position: absolute;
   left: 80px;

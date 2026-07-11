@@ -118,7 +118,7 @@ export interface Order {
   payment_status?: "unpaid" | "waiting_confirmation" | "paid" | "rejected" | null;
   paid_at?: string | null;
   payment_verified_at?: string | null;
-  payment_notes?: string | null;
+  payment_proof?: string | null;
   midtrans_id: string | null;
   midtrans_url: string | null;
   notes: string | null;

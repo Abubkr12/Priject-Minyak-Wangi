@@ -30,7 +30,10 @@ export async function updateResiStatus(formData: FormData) {
   revalidatePath('/pesanan'); // update the customer side too
 }
 
-export async function markAsPaid(orderId: string) {
+export async function markAsPaid(payload: string | FormData) {
+  const orderId = typeof payload === 'string' ? payload : payload.get('orderId') as string;
+  if (!orderId) throw new Error('Order ID hilang');
+
   const { error } = await supabaseAdmin
     .from('orders')
     .update({
@@ -38,6 +41,27 @@ export async function markAsPaid(orderId: string) {
       payment_status: 'paid',
       paid_at: new Date().toISOString(),
       payment_verified_at: new Date().toISOString()
+    })
+    .eq('id', orderId);
+
+  if (error) {
+    throw new Error('Gagal update status: ' + error.message);
+  }
+
+  revalidatePath('/admin/pesanan');
+  revalidatePath(`/admin/pesanan/${orderId}`);
+  revalidatePath('/pesanan');
+}
+
+export async function rejectPayment(payload: string | FormData) {
+  const orderId = typeof payload === 'string' ? payload : payload.get('orderId') as string;
+  if (!orderId) throw new Error('Order ID hilang');
+
+  const { error } = await supabaseAdmin
+    .from('orders')
+    .update({
+      payment_status: 'rejected',
+      status: 'cancelled'
     })
     .eq('id', orderId);
 

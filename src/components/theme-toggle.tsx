@@ -11,7 +11,6 @@ export function ThemeToggle() {
       className="theme-toggle"
       onClick={toggle}
       aria-label={theme === "dark" ? "Ganti ke mode terang" : "Ganti ke mode gelap"}
-      title={theme === "dark" ? "Mode terang" : "Mode gelap"}
     >
       <span className="theme-toggle__track">
         <span className="theme-toggle__thumb">

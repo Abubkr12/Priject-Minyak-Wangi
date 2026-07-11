@@ -1,27 +1,28 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatRupiah } from "@/lib/types";
 import Link from "next/link";
-import { ChevronLeft, Truck, Package, User, MapPin } from "lucide-react";
-import { markAsPaid, updateResiStatus } from "../actions";
+import { ChevronLeft, Truck, Package, User, MapPin, CheckCircle, XCircle, FileImage } from "lucide-react";
+import { markAsPaid, updateResiStatus, rejectPayment } from "../actions";
+import { PaymentProofModal } from "../PaymentProofModal";
 
-export default async function AdminOrderDetail({ params }: { params: { id: string } }) {
+export default async function AdminOrderDetail({ params }: { params: Promise<{ id: string }> }) {
   const supabase = createAdminClient();
-  const { id } = params;
+  const { id } = await params;
 
-  const { data: order } = await supabase
+  const { data: order, error } = await supabase
     .from("orders")
     .select("*")
-    .eq("id", id)
+    .eq("id", parseInt(id, 10))
     .single();
 
-  if (!order) {
-    return <div>Pesanan tidak ditemukan.</div>;
+  if (error || !order) {
+    return <div>Pesanan tidak ditemukan atau terjadi kesalahan: {error?.message}</div>;
   }
 
   const { data: items } = await supabase
     .from("order_items")
-    .select("*")
-    .eq("order_id", id);
+    .select("*, perfumes(image_url)")
+    .eq("order_id", parseInt(id, 10));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 32 }}>
@@ -49,11 +50,21 @@ export default async function AdminOrderDetail({ params }: { params: { id: strin
             </h2>
             
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {items?.map(item => (
+              {items?.map((item: any) => (
                 <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: 16, borderBottom: "1px solid var(--c-border)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-                    <div style={{ width: 48, height: 48, background: "var(--glass-bg)", borderRadius: "var(--r-md)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, color: "var(--c-gold)" }}>
-                      {item.quantity}x
+                    <div style={{ position: "relative", width: 56, height: 56, borderRadius: "var(--r-md)", overflow: "hidden", background: "var(--c-surface-2)", border: "1px solid var(--c-border)", flexShrink: 0 }}>
+                      {item.perfumes?.image_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.perfumes.image_url} alt={item.perfume_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <Package size={20} style={{ color: "var(--c-ink-muted)" }} />
+                        </div>
+                      )}
+                      <div style={{ position: "absolute", bottom: 0, right: 0, background: "var(--c-gold)", color: "#000", fontSize: "0.7rem", fontWeight: 700, padding: "2px 6px", borderTopLeftRadius: "var(--r-md)" }}>
+                        {item.quantity}x
+                      </div>
                     </div>
                     <div>
                       <div style={{ fontWeight: 500, color: "var(--c-ink)" }}>{item.perfume_name}</div>
@@ -109,6 +120,21 @@ export default async function AdminOrderDetail({ params }: { params: { id: strin
             </div>
           </div>
 
+          {/* Payment Verification Block */}
+          {order.payment_status === "waiting_confirmation" && order.payment_proof && (
+            <div style={{ background: "var(--c-surface-1)", border: "1px solid var(--c-gold)", borderRadius: "var(--r-lg)", padding: 24, boxShadow: "0 4px 20px rgba(234, 179, 8, 0.05)" }}>
+              <h2 style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "1.1rem", fontWeight: 600, color: "var(--c-ink)", marginBottom: 16 }}>
+                <FileImage size={18} style={{ color: "var(--c-gold)" }} />
+                Verifikasi Pembayaran
+              </h2>
+              <p style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 16 }}>
+                Pelanggan telah mengunggah bukti pembayaran. Silakan periksa keabsahan bukti transfer di bawah ini sebelum memproses pesanan.
+              </p>
+              
+              <PaymentProofModal orderId={order.id.toString()} paymentProof={order.payment_proof} />
+            </div>
+          )}
+
           {/* Shipping Update Form */}
           <div style={{ background: "var(--c-surface-1)", border: "1px solid var(--c-border)", borderRadius: "var(--r-lg)", padding: 24 }}>
             <h2 style={{ display: "flex", alignItems: "center", gap: 10, fontSize: "1.1rem", fontWeight: 600, color: "var(--c-ink)", marginBottom: 20 }}>
@@ -126,7 +152,9 @@ export default async function AdminOrderDetail({ params }: { params: { id: strin
               </div>
               <div style={{ padding: 12, background: "var(--c-surface-2)", borderRadius: "var(--r-md)", border: "1px solid var(--c-border)" }}>
                 <div style={{ fontSize: "0.75rem", color: "var(--c-ink-dim)", marginBottom: 4 }}>Status Bayar</div>
-                <div style={{ fontSize: "0.85rem", color: order.payment_status === "paid" ? "var(--c-teal)" : "var(--c-gold)", fontWeight: 600 }}>{order.payment_status || "unpaid"}</div>
+                <div style={{ fontSize: "0.85rem", color: order.payment_status === "paid" ? "var(--c-teal)" : (order.payment_status === "waiting_confirmation" ? "var(--c-gold)" : "var(--c-ink-dim)"), fontWeight: 600 }}>
+                  {order.payment_status === "paid" ? "Lunas" : (order.payment_status === "waiting_confirmation" ? "Dibayar (Menunggu Verifikasi)" : "Belum Dibayar")}
+                </div>
               </div>
             </div>
 
@@ -152,34 +180,7 @@ export default async function AdminOrderDetail({ params }: { params: { id: strin
                 Tandai Sudah Dikirim
               </button>
 
-              {order.status === 'pending' && (
-                <div style={{ marginTop: 24, padding: 16, background: "rgba(234, 179, 8, 0.1)", border: "1px solid rgba(234, 179, 8, 0.2)", borderRadius: "var(--r-md)" }}>
-                  
-                  {order.payment_notes && order.payment_notes.startsWith('http') ? (
-                    <div style={{ marginBottom: 16 }}>
-                        <div style={{ fontSize: "0.85rem", color: "#ca8a04", marginBottom: 8, fontWeight: 600 }}>Customer telah mengunggah bukti pembayaran:</div>
-                        <a href={order.payment_notes} target="_blank" rel="noopener noreferrer">
-                            <img src={order.payment_notes} alt="Bukti Pembayaran" style={{ width: '100%', maxHeight: 300, objectFit: 'contain', borderRadius: 'var(--r-sm)', border: '1px solid var(--c-border)', background: 'var(--bg-color)', display: 'block', cursor: 'zoom-in' }} />
-                        </a>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: "0.85rem", color: "#ca8a04", marginBottom: 12 }}>
-                        Status pesanan masih <b>Tertunda (Belum Dibayar)</b>. Customer belum mengunggah bukti pembayaran. Cek mutasi rekening Anda secara berkala.
-                    </div>
-                  )}
 
-                  <button
-                    type="submit"
-                    formAction={async () => {
-                    "use server";
-                    await markAsPaid(order.id);
-                  }}
-                    style={{ width: "100%", padding: "10px", background: "#ca8a04", color: "#fff", border: "none", borderRadius: "var(--r-md)", fontWeight: 600, cursor: "pointer", marginTop: 8 }}
-                  >
-                    Verifikasi Pembayaran (Tandai Lunas)
-                  </button>
-                </div>
-              )}
             </form>
           </div>
 

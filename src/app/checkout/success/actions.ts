@@ -53,12 +53,13 @@ export async function uploadPaymentProof(orderId: number, base64Image: string) {
 
     const publicUrl = publicUrlData.publicUrl;
 
-    // Update order with the proof url in payment_notes
-    // We will update payment_notes to contain the URL.
+    // Update order with the proof url in payment_proof
+    // We will update payment_proof to contain the URL and set payment_status to waiting_confirmation.
     const { error: updateError } = await supabase
       .from("orders")
       .update({
-        payment_notes: publicUrl,
+        payment_proof: publicUrl,
+        payment_status: "waiting_confirmation"
       })
       .eq("id", orderId);
 

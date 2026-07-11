@@ -5,6 +5,7 @@ import { User, LogOut, Package, Tag, Clock, ArrowRight } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
 import { formatRupiah } from '@/lib/types'
 import { TrackingWidget } from './TrackingWidget'
+import { TanyaStatusButton } from '@/components/tanya-status-button'
 
 export const metadata = {
   title: 'Riwayat Pesanan — Ela Parfum',
@@ -14,7 +15,7 @@ export const metadata = {
 const statusColors: Record<string, { bg: string, text: string, label: string }> = {
   pending: { bg: 'var(--c-gold-dim)', text: 'var(--c-gold-light)', label: 'Menunggu Pembayaran' },
   confirmed: { bg: 'rgba(59, 130, 246, 0.1)', text: 'rgb(59, 130, 246)', label: 'Dikonfirmasi' },
-  processing: { bg: 'rgba(168, 85, 247, 0.1)', text: 'rgb(168, 85, 247)', label: 'Diproses' },
+  processing: { bg: 'rgba(168, 85, 247, 0.1)', text: 'rgb(168, 85, 247)', label: 'Pembayaran Diterima, Menunggu Dikirim' },
   shipped: { bg: 'rgba(14, 165, 233, 0.1)', text: 'rgb(14, 165, 233)', label: 'Dikirim' },
   completed: { bg: 'rgba(34, 197, 94, 0.1)', text: 'rgb(34, 197, 94)', label: 'Selesai' },
   cancelled: { bg: 'rgba(239, 68, 68, 0.1)', text: 'var(--c-rose)', label: 'Dibatalkan' }
@@ -115,21 +116,17 @@ export default async function PesananPage() {
                                 {statusConfig.label}
                               </div>
                               
-                              {order.status === 'pending' && (!order.payment_notes || !order.payment_notes.startsWith('http')) && (
+                              {order.status === 'pending' && (!order.payment_proof || !order.payment_proof.startsWith('http')) && (
                                 <Link href={`/checkout/success?id=${order.id}`} className="btn btn-primary" style={{ padding: '0 16px', height: '36px', fontSize: '0.9rem' }}>
                                   Bayar Sekarang
                                 </Link>
                               )}
-                              {order.status === 'pending' && order.payment_notes && order.payment_notes.startsWith('http') && (
+                              {order.status === 'pending' && order.payment_proof && order.payment_proof.startsWith('http') && (
                                 <div style={{ display: 'flex', gap: 8 }}>
                                   <div style={{ padding: '0 16px', height: '36px', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'var(--c-surface-2)', color: 'var(--c-ink-dim)', borderRadius: 'var(--r-sm)', fontWeight: 500, border: '1px solid var(--c-border)' }}>
                                     Menunggu Verifikasi
                                   </div>
-                                  <button onClick={() => {
-                                      document.getElementById('chatbot-toggle')?.click();
-                                  }} className="btn btn-secondary" style={{ padding: '0 12px', height: '36px', fontSize: '0.85rem' }}>
-                                    Tanya Status
-                                  </button>
+                                  <TanyaStatusButton />
                                 </div>
                               )}
                             </div>

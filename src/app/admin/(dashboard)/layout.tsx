@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Package, LayoutDashboard, Users, Settings, LogOut, MessageCircle, ChevronLeft } from "lucide-react";
+import { Package, LayoutDashboard, Users, Settings, LogOut, MessageCircle, ChevronLeft, TrendingUp } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/lib/supabase/client";
 import "../admin.css";
@@ -40,6 +40,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       ]
     },
     { name: "Chat", href: "/admin/chat", icon: MessageCircle },
+    { 
+      name: "Statistik", 
+      href: "/admin/statistik", 
+      icon: TrendingUp,
+      subItems: [
+        { name: "Penjualan", href: "/admin/statistik" }
+      ]
+    },
     { 
       name: "Katalog", 
       href: "/admin/produk", 

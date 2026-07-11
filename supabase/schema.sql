@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS orders (
   status          TEXT DEFAULT 'pending'
                   CHECK (status IN ('pending','confirmed','processing','shipped','completed','cancelled')),
   payment_method  TEXT,
+  payment_proof   TEXT,
   midtrans_id     TEXT,
   midtrans_url    TEXT,
   notes           TEXT,
@@ -155,6 +156,7 @@ CREATE TABLE IF NOT EXISTS custom_requests (
   reference_image TEXT,
   status          TEXT DEFAULT 'baru'
                   CHECK (status IN ('baru','diproses','butuh_review','selesai','dibatalkan')),
+  payment_proof   TEXT,
   admin_notes     TEXT,
   created_at      TIMESTAMPTZ DEFAULT now(),
   updated_at      TIMESTAMPTZ DEFAULT now()

@@ -54,7 +54,7 @@ export default function CheckoutSuccessPage() {
       }
 
       setOrder(o);
-      if (o.payment_notes && o.payment_notes.startsWith('http')) {
+      if (o.payment_proof && o.payment_proof.startsWith('http')) {
         setUploaded(true);
       }
 
@@ -266,16 +266,16 @@ export default function CheckoutSuccessPage() {
                    Terima kasih, pembayaran Anda sedang diproses. Status pesanan diubah menjadi Menunggu Konfirmasi.
                  </p>
                  <div style={{ display: 'flex', gap: 16 }}>
-                    <Link href="/pesanan" className="btn btn-primary" style={{ padding: '0 32px', height: '48px', borderRadius: 100 }}>
+                    <Link href="/pesanan" className="btn btn-primary" style={{ padding: '0 32px', height: '48px', borderRadius: 100, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                       Lihat Pesanan Saya
                     </Link>
-                    <Link href={`/pesanan/invoice/${orderId}`} target="_blank" className="btn btn-outline" style={{ padding: '0 24px', height: '48px', borderRadius: 100, border: '1px solid var(--c-gold)', color: 'var(--c-gold)' }}>
+                    <Link href={`/pesanan/invoice/${orderId}`} target="_blank" className="btn" style={{ padding: '0 24px', height: '48px', borderRadius: 100, border: '1px solid var(--c-gold)', color: 'var(--c-gold)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                       Lihat Invoice
                     </Link>
                     <button onClick={() => {
                         // Open Chat widget if possible by triggering a custom event or using a ref
                         document.getElementById('chatbot-toggle')?.click();
-                    }} className="btn btn-secondary" style={{ padding: '0 24px', height: '48px', borderRadius: 100, display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                    }} className="btn btn-ghost" style={{ padding: '0 24px', height: '48px', borderRadius: 100, display: 'inline-flex', gap: 8, alignItems: 'center', justifyContent: 'center', color: 'var(--c-ink)' }}>
                         <MessageSquare size={18} /> Tanya Status
                     </button>
                  </div>
