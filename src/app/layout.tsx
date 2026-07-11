@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 import Script from "next/script";
 import { createClient } from "@/lib/supabase/server";
 import { ChatWidget } from "@/components/chat-widget";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "Ela Parfum — Parfum Isi Ulang Premium Condet",
@@ -69,6 +70,7 @@ export default async function RootLayout({
             {children}
             {user && <ChatWidget userId={user.id} />}
             <Toaster position="top-center" richColors />
+            <Analytics />
           </CartProvider>
         </ThemeProvider>
       </body>
