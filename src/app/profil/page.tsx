@@ -40,11 +40,7 @@ export default async function ProfilPage() {
     <div className="customer-page">
       <header className="topbar" role="banner">
         <Link href="/" className="topbar__brand">
-          <span className="brand-mark">N</span>
-          <div>
-            <div className="brand-name">Ela Parfum</div>
-            <div className="brand-sub">Parfum Isi Ulang</div>
-          </div>
+          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
         </Link>
         <div className="topbar__spacer" />
         <ThemeToggle />

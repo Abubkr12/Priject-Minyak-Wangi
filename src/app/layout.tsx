@@ -57,14 +57,14 @@ export default async function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap"
           rel="stylesheet"
         />
-      </head>
-      <body>
         <script
           id="theme-script"
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('perfume-theme');if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`
           }}
         />
+      </head>
+      <body>
         <ThemeProvider>
           <CartProvider>
             {children}

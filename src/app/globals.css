@@ -4,6 +4,7 @@
    DESIGN TOKENS
 ───────────────────────────────────────── */
 :root {
+  color-scheme: dark;
   /* Palette */
   --c-bg:          #0a0c0b;
   --c-surface-1:   #111614;

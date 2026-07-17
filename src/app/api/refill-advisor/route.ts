@@ -2,58 +2,125 @@ import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+// Function to read AI Config from Supabase Database
+async function getAiConfigs() {
+  const supabase = createAdminClient();
+  let apiKeys: string[] = [];
+  let availableModels: string[] = [];
+  
+  try {
+    const { data: keysData, error: keysError } = await supabase.from('ai_api_keys').select('api_key');
+    if (!keysError && keysData && keysData.length > 0) {
+      apiKeys = keysData.map(k => k.api_key);
+    }
+    
+    const { data: modelsData, error: modelsError } = await supabase.from('ai_models').select('model_name').eq('is_active', true);
+    if (!modelsError && modelsData && modelsData.length > 0) {
+      availableModels = modelsData.map(m => m.model_name);
+    }
+  } catch (error: any) {
+    console.error("Gagal membaca AI Config dari Supabase:", error);
+  }
+  
+  // Fallbacks if Database reading fails or is empty
+  if (apiKeys.length === 0) apiKeys = [process.env.GEMINI_API_KEY || ""];
+  if (availableModels.length === 0) availableModels = ["gemini-2.5-flash", "gemini-3.1-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro"];
+  
+  return { apiKeys, availableModels, configError: "" };
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { baseNote, description, ratio, imageBase64 } = body;
-
+    const { sessionId, message } = body;
     const supabase = createAdminClient();
     
-    // Fetch API key
-    const { data: settingsData } = await supabase
-      .from("store_settings")
-      .select("key, value")
-      .in("key", ["GEMINI_API_KEY"]);
-
-    const settingsMap: Record<string, string> = {};
-    if (settingsData) {
-      settingsData.forEach(s => settingsMap[s.key] = s.value);
-    }
-
-    const apiKey = settingsMap.GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+    let currentSessionId = sessionId;
+    let history: any[] = [];
     
-    if (!apiKey) {
-      return NextResponse.json({ error: "API Key not found" }, { status: 500 });
+    // 1. Manajamen Sesi (Tarik Riwayat dari Database)
+    if (currentSessionId) {
+      const { data: messagesData } = await supabase
+        .from('ai_chat_messages')
+        .select('role, content')
+        .eq('session_id', currentSessionId)
+        .order('created_at', { ascending: true });
+      if (messagesData) {
+        history = messagesData.map(m => ({ 
+          role: m.role === 'assistant' ? 'model' : m.role, 
+          parts: [{ text: m.content }] 
+        }));
+      }
+    } else {
+      // Buat sesi baru
+      const { data: newSession, error: sessionError } = await supabase
+        .from('ai_chat_sessions')
+        .insert({})
+        .select()
+        .single();
+        
+      if (newSession) currentSessionId = newSession.id;
+    }
+    
+    // Simpan pesan user ke database
+    if (currentSessionId && message) {
+      await supabase.from('ai_chat_messages').insert({
+        session_id: currentSessionId,
+        role: 'user',
+        content: message.content
+      });
     }
 
-    const ai = new GoogleGenAI({ apiKey: apiKey });
+    // 2. Pencarian Data Bibit (Katalog)
+    // Ambil data bibit dari DB
+    const { data: bibitList } = await supabase
+      .from('bibit')
+      .select('name, intensity, main_accord, stock_ml')
+      .eq('is_active', true);
+      
+    // Kelompokkan bibit untuk prompt
+    let catalogueText = "Katalog Bibit yang Tersedia (JANGAN rekomendasikan di luar ini!):\n";
+    if (bibitList) {
+      const soft = bibitList.filter(b => b.intensity === 'Soft').map(b => b.name).join(", ");
+      const medium = bibitList.filter(b => b.intensity === 'Medium').map(b => b.name).join(", ");
+      const strong = bibitList.filter(b => b.intensity === 'Strong').map(b => b.name).join(", ");
+      const uncategorized = bibitList.filter(b => !b.intensity).map(b => b.name).join(", ");
+      
+      catalogueText += `- Intensity Soft (Woody/Earthy): ${soft}\n`;
+      catalogueText += `- Intensity Medium (Floral/Romantic): ${medium}\n`;
+      catalogueText += `- Intensity Strong (Fresh/Calm): ${strong}\n`;
+      if (uncategorized) catalogueText += `- Lain-lain: ${uncategorized}\n`;
+    }
 
-    const SYSTEM_PROMPT = `Kamu adalah 'Master Perfumer' dari Ela Parfum (spesialis parfum isi ulang/refill).
-Tugasmu adalah meracik parfum kustom berdasarkan permintaan pelanggan.
+    // 3. Rakit Prompt Utuh
+    const SYSTEM_PROMPT = `Lu adalah Nove, Asisten Toko (Master Perfumer) dari Ela Parfum.
+Tugas lu adalah melayani pelanggan secara interaktif dan ramah, tapi JAWABLAH DENGAN SINGKAT DAN PADAT (hemat kuota).
 
-INPUT DARI PELANGGAN:
-- Base Note Utama: ${baseNote || 'Tidak spesifik'}
-- Kekuatan/Rasio Bibit: ${ratio === 'auto' ? 'Pilihkan yang terbaik sesuai deskripsi' : ratio}
-- Deskripsi/Keinginan: ${description || 'Tidak ada deskripsi'}
-${imageBase64 ? '- Pelanggan juga mengunggah gambar referensi parfum (analisis gambar tersebut).' : ''}
+ATURAN KETAT RACIKAN KUSTOM:
+1. Lu HANYA BOLEH merekomendasikan parfum dari "Katalog Bibit yang Tersedia" di bawah ini. JANGAN HALUSINASI menyebut merk lain.
+2. Rasio pencampuran (Kekuatan Aroma) yang diizinkan HANYA ADA 2:
+   - 50/50 (Eau De Parfum)
+   - 70/30 (Extrait De Parfum)
+   JANGAN pernah memberikan atau menyetujui rasio lain (misal 60/40, dilarang!). Jika user meminta di luar itu, tolak dengan sopan dan tawarkan 2 opsi tersebut.
+3. Tanya preferensi user secara bertahap jika belum jelas. Jika sudah jelas, berikan rekomendasi racikan yang pas.
+4. Jika user mengunggah gambar, cobalah menebak notes parfum dari botol/gambar tersebut lalu cocokkan dengan bibit yang kita punya.
 
-ATURAN KETAT:
-1. JANGAN PERNAH membahas topik di luar parfum, refill, dan aroma. Tolak tegas jika ditanya soal MTK, curhat, dsb.
-2. Jawab SINGKAT, PADAT, dan JELAS (demi menghemat kuota).
+${catalogueText}`;
 
-FORMAT OUTPUT (HARUS JSON):
-{
-  "customer_description": "Gambaran aroma yang puitis tapi singkat (maksimal 2 kalimat) untuk customer.",
-  "name_suggestion": "Satu nama unik untuk racikan ini (misal: Midnight Citrus).",
-  "admin_recipe": "Instruksi singkat racikan untuk admin/seller (misal: 40% Oud, 30% Rose, 30% Vanilla. Base pelarut 2:1)."
-}`;
-
-    const promptContents: any[] = [SYSTEM_PROMPT];
-
-    if (imageBase64) {
-      const matches = imageBase64.match(/^data:(image\/\w+);base64,(.+)$/);
+    const promptContents: any[] = [
+      { role: "user", parts: [{ text: SYSTEM_PROMPT }] },
+      { role: "model", parts: [{ text: "Baik, saya mengerti aturannya." }] }
+    ];
+    
+    // Masukkan riwayat
+    promptContents.push(...history);
+    
+    // Masukkan pesan user terbaru
+    const userParts: any[] = [{ text: message.content }];
+    if (message.image) {
+      const matches = message.image.match(/^data:(image\/\w+);base64,(.+)$/);
       if (matches) {
-        promptContents.push({
+        userParts.push({
           inlineData: {
             mimeType: matches[1],
             data: matches[2]
@@ -61,57 +128,60 @@ FORMAT OUTPUT (HARUS JSON):
         });
       }
     }
+    promptContents.push({ role: "user", parts: userParts });
 
-    // Dynamic model selection strategy (Fallback Loop)
-    let modelList: string[] = ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro"];
-    try {
-      const modelsResp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      const modelsData = await modelsResp.json();
-      if (modelsData.models) {
-        const availableFlashModels = modelsData.models
-          .filter((m: any) => m.supportedGenerationMethods?.includes('generateContent'))
-          .filter((m: any) => m.name.includes('gemini') && m.name.includes('flash'))
-          .filter((m: any) => !m.name.includes('tts') && !m.name.includes('vision') && !m.name.includes('image') && !m.name.includes('embedding') && !m.name.includes('live'))
-          .sort((a: any, b: any) => b.name.localeCompare(a.name)); // as in Transkrip Audio
+    // 4. Eksekusi API dengan Rotasi
+    const { apiKeys, availableModels, configError: cfgErr } = await getAiConfigs();
+    
+    let resultText = "";
+    let success = false;
+    let lastError = "";
+    
+    for (let keyIdx = 0; keyIdx < apiKeys.length; keyIdx++) {
+      for (let modIdx = 0; modIdx < availableModels.length; modIdx++) {
+        try {
+          const ai = new GoogleGenAI({ apiKey: apiKeys[keyIdx] });
+          const response = await ai.models.generateContent({
+            model: availableModels[modIdx],
+            contents: promptContents,
+            config: {
+              temperature: 0.7
+            }
+          });
           
-        if (availableFlashModels.length > 0) {
-          modelList = availableFlashModels.map((m: any) => m.name.replace('models/', ''));
+          resultText = response.text || '';
+          success = true;
+          break; // Berhasil, keluar dari loop model
+        } catch (e: any) {
+          console.log(`Model ${availableModels[modIdx]} pada key ${keyIdx} gagal:`, e.message);
+          lastError = e.message;
+          // Lanjut ke model berikutnya
         }
       }
-    } catch (e) {
-      console.warn("Failed to fetch models dynamically, using default fallback list:", e);
+      if (success) break; // Berhasil, keluar dari loop key
+    }
+    
+    if (!success) {
+      return NextResponse.json({ error: "Semua kuota API LLM telah habis. Coba lagi besok.", details: lastError, configError: cfgErr }, { status: 500 });
     }
 
-    let lastError: any;
-    for (const modelName of modelList) {
-      try {
-        console.log(`Mencoba menggunakan model: ${modelName}`);
-        const response = await ai.models.generateContent({
-          model: modelName,
-          contents: promptContents,
-          config: {
-            responseMimeType: "application/json",
-            temperature: 0.7
-          }
-        });
-        
-        const resultText = response.text;
-        return NextResponse.json(JSON.parse(resultText || "{}"));
-      } catch (e: any) {
-        console.warn(`Model ${modelName} gagal:`, e.message);
-        lastError = e;
-        // Continue loop to try the next model
-      }
+    // 5. Simpan Respons AI ke Database
+    if (currentSessionId) {
+      await supabase.from('ai_chat_messages').insert({
+        session_id: currentSessionId,
+        role: 'assistant',
+        content: resultText
+      });
     }
 
-    // If we reach here, all models failed
-    throw lastError || new Error("Semua model Gemini gagal dihubungi");
+    // Kembalikan ke Frontend
+    return NextResponse.json({ 
+      sessionId: currentSessionId,
+      reply: resultText 
+    });
 
   } catch (error: any) {
-    console.error("Refill Advisor API Error:", error);
-    return NextResponse.json({ 
-      error: "Maaf, sistem racikan sedang sibuk. Silakan coba lagi.",
-      details: error.message 
-    }, { status: 500 });
+    console.error("Chat API Error:", error);
+    return NextResponse.json({ error: error.message || "Terjadi kesalahan server" }, { status: 500 });
   }
 }

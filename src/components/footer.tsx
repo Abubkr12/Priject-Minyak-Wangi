@@ -83,11 +83,7 @@ export function Footer() {
           {/* Brand column */}
           <div className="footer__brand-col">
             <div className="footer__brand">
-              <span className="brand-mark">E</span>
-              <div>
-                <div className="brand-name" style={{ fontSize: "1.2rem" }}>Ela Parfum</div>
-                <div className="brand-sub">Parfum Isi Ulang Premium</div>
-              </div>
+              <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "48px", width: "auto" }} />
             </div>
             <p className="footer__brand-desc">
               Toko parfum isi ulang Condet dengan AI yang membantu Anda menemukan aroma

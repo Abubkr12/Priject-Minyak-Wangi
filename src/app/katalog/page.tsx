@@ -131,6 +131,7 @@ export default function KatalogPage() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [activeFamily, setActiveFamily] = useState<string>("all");
+  const [activeStrength, setActiveStrength] = useState<string>("all");
   const [sort, setSort] = useState<SortOption>("newest");
   const [showSort, setShowSort] = useState(false);
 
@@ -186,6 +187,11 @@ export default function KatalogPage() {
       if (fam) result = result.filter((p) => p.family_id === fam.id);
     }
 
+    // Strength filter
+    if (activeStrength !== "all") {
+      result = result.filter((p) => p.strength === activeStrength);
+    }
+
     // Search
     const q = query.trim().toLowerCase();
     if (q) {
@@ -219,18 +225,14 @@ export default function KatalogPage() {
     }
 
     return result;
-  }, [perfumes, families, activeFamily, query, sort]);
+  }, [perfumes, families, activeFamily, activeStrength, query, sort]);
 
   return (
     <div className="customer-page">
       {/* Topbar */}
       <header className="topbar" role="banner">
         <Link href="/" className="topbar__brand" aria-label="Kembali ke beranda">
-          <span className="brand-mark">N</span>
-          <div>
-            <div className="brand-name">Ela Parfum</div>
-            <div className="brand-sub">Parfum Isi Ulang</div>
-          </div>
+          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
         </Link>
         <div className="topbar__spacer" />
         <nav className="topbar__nav" aria-label="Navigasi utama">
@@ -376,10 +378,34 @@ export default function KatalogPage() {
           ))}
         </div>
 
+        {/* Strength filters */}
+        <div className="aroma-filters" role="tablist" aria-label="Filter intensitas parfum" style={{ marginBottom: 32 }}>
+          <button
+            role="tab"
+            aria-selected={activeStrength === "all"}
+            className={`aroma-tab ${activeStrength === "all" ? "active" : ""}`}
+            onClick={() => setActiveStrength("all")}
+          >
+            Semua Intensitas
+          </button>
+          {["Strong", "Medium", "Soft"].map((s) => (
+            <button
+              key={s}
+              role="tab"
+              aria-selected={activeStrength === s}
+              className={`aroma-tab ${activeStrength === s ? "active" : ""}`}
+              onClick={() => setActiveStrength(s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
         {/* Results count */}
         <div style={{ marginBottom: 20, fontSize: "0.84rem", color: "var(--c-ink-dim)" }}>
           {loading ? "Memuat..." : `${filtered.length} parfum ditemukan`}
           {activeFamily !== "all" && ` dalam ${families.find((f) => f.name === activeFamily)?.label}`}
+          {activeStrength !== "all" && ` (Intensitas ${activeStrength})`}
           {query && ` untuk "${query}"`}
         </div>
 

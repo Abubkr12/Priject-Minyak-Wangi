@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { KeyRound, Shield, AlertCircle, Save, Loader2, CheckCircle2, Eye, EyeOff, Edit2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { KeyRound, Shield, AlertCircle, Save, Loader2, CheckCircle2, Eye, EyeOff, Edit2, Upload, FileSpreadsheet } from "lucide-react";
 import { getStoreSettings, saveStoreSetting } from "./actions";
 
 function MaskedApiInput({ 
@@ -112,6 +112,10 @@ export default function ApiSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ text: "", type: "" });
+  
+  const [uploadingExcel, setUploadingExcel] = useState(false);
+  const [excelMessage, setExcelMessage] = useState({ text: "", type: "" });
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function load() {
@@ -146,6 +150,36 @@ export default function ApiSettingsPage() {
 
   const updateKey = (key: keyof typeof keys, value: string) => {
     setKeys(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingExcel(true);
+    setExcelMessage({ text: "", type: "" });
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/admin/upload-ai-config", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        setExcelMessage({ text: data.message, type: "success" });
+      } else {
+        setExcelMessage({ text: data.message || "Gagal mengunggah file.", type: "error" });
+      }
+    } catch (err: any) {
+      setExcelMessage({ text: "Terjadi kesalahan sistem.", type: "error" });
+    } finally {
+      setUploadingExcel(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
   };
 
   if (loading) {
@@ -192,14 +226,55 @@ export default function ApiSettingsPage() {
             
             {/* GEMINI AI */}
             <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-              <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--c-gold)", borderBottom: "1px solid var(--c-border)", paddingBottom: 8 }}>Google Gemini AI</h3>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid var(--c-border)", paddingBottom: 8 }}>
+                <h3 style={{ fontSize: "1rem", fontWeight: 600, color: "var(--c-gold)", margin: 0 }}>Google Gemini AI</h3>
+              </div>
               
               <MaskedApiInput 
-                label="API Key Gemini" 
+                label="Fallback API Key Gemini (Jika Database Kosong)" 
                 value={keys.GEMINI_API_KEY} 
                 onChange={(val) => updateKey("GEMINI_API_KEY", val)} 
                 placeholder="AIzaSy..." 
               />
+
+              <div style={{ background: "var(--c-surface-1)", border: "1px solid var(--c-border)", borderRadius: "var(--r-md)", padding: "20px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <div style={{ width: 36, height: 36, borderRadius: "8px", background: "rgba(59, 130, 246, 0.1)", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <FileSpreadsheet size={18} />
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: "0.95rem", fontWeight: 600, margin: 0, color: "var(--c-ink)" }}>Upload Konfigurasi Excel (AI Limitation.xlsx)</h4>
+                    <p style={{ fontSize: "0.8rem", color: "var(--c-ink-dim)", margin: "4px 0 0" }}>Update daftar API Key & Model AI ke Database secara massal dari Excel.</p>
+                  </div>
+                </div>
+                
+                <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                  <input 
+                    type="file" 
+                    accept=".xlsx, .xls" 
+                    ref={fileInputRef} 
+                    onChange={handleExcelUpload} 
+                    style={{ display: "none" }} 
+                  />
+                  <button 
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingExcel}
+                    className="btn btn-secondary"
+                    style={{ display: "flex", alignItems: "center", gap: 8, fontSize: "0.85rem", padding: "8px 16px" }}
+                  >
+                    {uploadingExcel ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+                    Pilih File Excel
+                  </button>
+                  
+                  {excelMessage.text && (
+                    <div style={{ fontSize: "0.85rem", color: excelMessage.type === "success" ? "#22c55e" : "#e11d48", display: "flex", alignItems: "center", gap: 6 }}>
+                      {excelMessage.type === "success" ? <CheckCircle2 size={14} /> : <AlertCircle size={14} />}
+                      {excelMessage.text}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* MIDTRANS */}

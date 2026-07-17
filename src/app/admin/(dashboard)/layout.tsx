@@ -50,9 +50,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     },
     { 
       name: "Katalog", 
-      href: "/admin/produk", 
+      href: "/admin/bibit", 
       icon: Package,
       subItems: [
+        { name: "Bibit", href: "/admin/bibit" },
+        { name: "Botol", href: "/admin/botol" },
         { name: "Produk", href: "/admin/produk" },
         { name: "Kategori", href: "/admin/kategori" },
         { name: "Voucher", href: "/admin/voucher" },
