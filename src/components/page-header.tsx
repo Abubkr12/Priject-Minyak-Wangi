@@ -55,7 +55,7 @@ export function PageHeader() {
       }
     };
 
-    supabase.auth.getUser().then((response) => {
+    supabase.auth.getUser().then((response: any) => {
       const u = response.data.user;
       setUser(u);
       if (u) fetchProfile(u.id);
