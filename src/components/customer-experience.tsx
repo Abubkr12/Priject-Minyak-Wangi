@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { FadeIn } from "@/components/fade-in";
 import { InteractiveCarousel } from "@/components/interactive-carousel";
@@ -196,61 +197,7 @@ export function CustomerExperience({ user, serverPerfumes = [], serverFamilies =
   return (
     <div className="customer-page">
       {/* TOPBAR */}
-      <header className="topbar" role="banner">
-        <div className="topbar__brand" style={{ textDecoration: "none", cursor: "default" }}>
-          <span className="brand-mark">EP</span>
-          <div>
-            <div className="brand-name">Ela Parfum</div>
-            <div className="brand-sub">Parfum Isi Ulang</div>
-          </div>
-        </div>
-
-        <div className="topbar__spacer" />
-
-        <nav className="topbar__nav" aria-label="Navigasi utama">
-          <a href="#catalog" className="topbar__nav-link">
-            <Package size={15} />
-            Katalog
-          </a>
-          <a href="#assistant" className="topbar__nav-link">
-            <Bot size={15} />
-            Konsultasi AI
-          </a>
-          <a href="#request" className="topbar__nav-link">
-            <ClipboardList size={15} />
-            Custom Request
-          </a>
-        </nav>
-
-        <div className="topbar__actions">
-          <ThemeToggle />
-          {user ? (
-            <Link href="/profil" className="btn-icon" aria-label="Profil Saya">
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--c-gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600 }}>
-                {user.user_metadata?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-              </div>
-            </Link>
-          ) : (
-            <Link href="/login" className="btn" style={{ padding: '0 16px', height: '36px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.06)' }}>
-              Masuk
-            </Link>
-          )}
-          <Link href="/keranjang" className="btn-icon" aria-label={`Keranjang (${cartCount})`} style={{ position: "relative" }}>
-            <ShoppingBag size={18} />
-            {cartCount > 0 && (
-              <span style={{
-                position: "absolute", top: -6, right: -6,
-                width: 18, height: 18, borderRadius: "50%",
-                background: "var(--c-gold)", color: "#0a0c0b",
-                fontSize: "0.65rem", fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center"
-              }}>
-                {cartCount}
-              </span>
-            )}
-          </Link>
-        </div>
-      </header>
+      <PageHeader />
 
       {/* HERO */}
       <section className="hero" aria-label="Hero section">

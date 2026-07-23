@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight, Lock, MapPin, CreditCard, Loader2, Truck, CheckCircle2, Landmark, QrCode } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { useCart } from "@/lib/cart-context";
 import { formatRupiah } from "@/lib/types";
@@ -194,15 +195,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="customer-page">
-      <header className="topbar" role="banner">
-        <Link href="/" className="topbar__brand">
-          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
-        </Link>
-        <div className="topbar__spacer" />
-        <div className="topbar__actions">
-          <ThemeToggle />
-        </div>
-      </header>
+      <PageHeader />
 
       <div style={{ width: "min(1200px, calc(100% - 32px))", margin: "0 auto", padding: "100px 0 80px" }}>
         <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: "0.8rem", color: "var(--c-ink-dim)", marginBottom: 32 }}>

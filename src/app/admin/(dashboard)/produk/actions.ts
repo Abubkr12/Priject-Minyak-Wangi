@@ -88,9 +88,11 @@ export async function saveProduct(formData: FormData) {
     mood,
     strength,
     longevity,
-    top_notes,
-    middle_notes,
-    base_notes,
+    notes: {
+      top: top_notes,
+      middle: middle_notes,
+      base: base_notes
+    },
     image_url,
     is_active,
     is_featured,

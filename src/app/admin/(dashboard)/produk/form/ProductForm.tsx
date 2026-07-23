@@ -11,7 +11,6 @@ export default function ProductForm({ initialData, families }: { initialData: an
   const [loading, setLoading] = useState(false);
   const [sizes, setSizes] = useState<any[]>(initialData?.sizes?.length > 0 ? initialData.sizes : [{ size_ml: 50, size_label: "50ml", price: 100000, stock: 10, is_active: true }]);
   const [imagePreview, setImagePreview] = useState<string | null>(initialData?.image_url || null);
-  const [notes, setNotes] = useState<string[]>(initialData?.notes || []);
   const [moods, setMoods] = useState<string[]>(initialData?.mood ? initialData.mood.split(',').map((m:string)=>m.trim()).filter(Boolean) : []);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -22,21 +21,7 @@ export default function ProductForm({ initialData, families }: { initialData: an
     "Bold", "Clean", "Playful", "Seductive", "Calming"
   ].sort();
 
-  const PREDEFINED_NOTES = [
-    "Rose", "Jasmine", "Peony", "Iris", "Lily of the Valley", "Tuberose", "Orchid",
-    "Bergamot", "Lemon", "Mandarin", "Grapefruit", "Orange", "Neroli", "Lime",
-    "Vanilla", "Caramel", "Tonka", "Milk accord", "Chocolate", "Coffee", "Honey",
-    "Oud", "Sandalwood", "Cedar", "Vetiver", "Patchouli", "Soft woods", "Pine",
-    "White musk", "Skin musk", "Dark musk",
-    "Amber", "Soft amber",
-    "Cardamom", "Saffron", "Pink pepper", "Black pepper", "Cinnamon", "Clove",
-    "Sea salt", "Linen", "Green tea", "Mint",
-    "Lychee", "Pear", "Apple", "Peach", "Plum", "Coconut", "Cherry",
-    "Tobacco", "Leather"
-  ].sort();
-
   const allMoods = Array.from(new Set([...PREDEFINED_MOODS, ...moods]));
-  const allNotes = Array.from(new Set([...PREDEFINED_NOTES, ...notes]));
 
   // Cropper states
   const [isCropping, setIsCropping] = useState(false);
@@ -212,15 +197,15 @@ export default function ProductForm({ initialData, families }: { initialData: an
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 8 }}>Top Notes</label>
-              <input type="text" name="top_notes" defaultValue={initialData?.top_notes?.join(', ')} className="input-field" placeholder="Cth: Bergamot, Lemon, Orange" style={{ width: "100%", padding: "10px 16px", background: "var(--bg-color)", border: "1px solid var(--c-border)", borderRadius: "var(--r-md)", color: "var(--c-ink)" }} />
+              <input type="text" name="top_notes" defaultValue={initialData?.notes?.top?.join(', ')} className="input-field" placeholder="Cth: Bergamot, Lemon, Orange" style={{ width: "100%", padding: "10px 16px", background: "var(--bg-color)", border: "1px solid var(--c-border)", borderRadius: "var(--r-md)", color: "var(--c-ink)" }} />
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 8 }}>Middle Notes</label>
-              <input type="text" name="middle_notes" defaultValue={initialData?.middle_notes?.join(', ')} className="input-field" placeholder="Cth: Jasmine, Rose, Ylang Ylang" style={{ width: "100%", padding: "10px 16px", background: "var(--bg-color)", border: "1px solid var(--c-border)", borderRadius: "var(--r-md)", color: "var(--c-ink)" }} />
+              <input type="text" name="middle_notes" defaultValue={initialData?.notes?.middle?.join(', ')} className="input-field" placeholder="Cth: Jasmine, Rose, Ylang Ylang" style={{ width: "100%", padding: "10px 16px", background: "var(--bg-color)", border: "1px solid var(--c-border)", borderRadius: "var(--r-md)", color: "var(--c-ink)" }} />
             </div>
             <div>
               <label style={{ display: "block", fontSize: "0.85rem", color: "var(--c-ink-dim)", marginBottom: 8 }}>Base Notes</label>
-              <input type="text" name="base_notes" defaultValue={initialData?.base_notes?.join(', ')} className="input-field" placeholder="Cth: Vanilla, Musk, Sandalwood" style={{ width: "100%", padding: "10px 16px", background: "var(--bg-color)", border: "1px solid var(--c-border)", borderRadius: "var(--r-md)", color: "var(--c-ink)" }} />
+              <input type="text" name="base_notes" defaultValue={initialData?.notes?.base?.join(', ')} className="input-field" placeholder="Cth: Vanilla, Musk, Sandalwood" style={{ width: "100%", padding: "10px 16px", background: "var(--bg-color)", border: "1px solid var(--c-border)", borderRadius: "var(--r-md)", color: "var(--c-ink)" }} />
             </div>
           </div>
 
@@ -340,14 +325,19 @@ export default function ProductForm({ initialData, families }: { initialData: an
           disabled={loading}
           style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, width: "100%", padding: "14px", background: "var(--c-gold)", color: "#000", border: "none", borderRadius: "var(--r-md)", fontSize: "0.95rem", fontWeight: 600, cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.7 : 1 }}
         >
-          {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+          {loading ? (
+            <div className="lds-ring"><div></div><div></div><div></div><div></div></div>
+          ) : (
+            <Save size={18} />
+          )}
           {loading ? 'Menyimpan...' : 'Simpan Produk'}
         </button>
       </div>
 
       {/* Cropper Modal for Product Image */}
       {isCropping && (
-        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: "rgba(0,0,0,0.8)", display: "flex", flexDirection: "column" }}>
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+          <div style={{ background: "var(--c-surface-1)", borderRadius: "var(--r-lg)", overflow: "hidden", display: "flex", flexDirection: "column", width: "100%", maxWidth: "600px", maxHeight: "90vh", boxShadow: "0 20px 40px rgba(0,0,0,0.3)", border: "1px solid var(--c-border)" }}>
           <div style={{ padding: "20px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "var(--c-surface-1)", borderBottom: "1px solid var(--c-border)" }}>
             <h3 style={{ margin: 0, color: "var(--c-ink)", fontSize: "1.1rem" }}>Sesuaikan & Kompres Foto Produk</h3>
             <button type="button" onClick={() => setIsCropping(false)} style={{ background: "transparent", border: "none", color: "var(--c-ink)", cursor: "pointer", display: "flex" }}>
@@ -355,7 +345,7 @@ export default function ProductForm({ initialData, families }: { initialData: an
             </button>
           </div>
           
-          <div style={{ position: "relative", flex: 1, background: "#111" }}>
+          <div style={{ position: "relative", width: "100%", height: "50vh", minHeight: "350px", background: "#111" }}>
             {imageSrc && (
               <Cropper
                 image={imageSrc}
@@ -371,7 +361,7 @@ export default function ProductForm({ initialData, families }: { initialData: an
             )}
           </div>
           
-          <div style={{ padding: "24px", background: "var(--c-surface-1)", borderTop: "1px solid var(--c-border)", display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ padding: "20px", background: "var(--c-surface-1)", borderTop: "1px solid var(--c-border)", display: "flex", flexDirection: "column", gap: 16 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
               <div>
                 <label style={{ color: "var(--c-ink-dim)", fontSize: "0.85rem", marginBottom: 8, display: "block" }}>Zoom (Perbesar)</label>
@@ -414,6 +404,7 @@ export default function ProductForm({ initialData, families }: { initialData: an
                 <Check size={18} /> Terapkan & Kompres
               </button>
             </div>
+          </div>
           </div>
         </div>
       )}

@@ -14,9 +14,7 @@ const supabase = createClient(
 let apiKeys = [];
 let availableModels = [
   'gemini-3.5-flash',
-  'gemini-3.1-flash-lite',
-  'gemini-2.5-flash',
-  'gemini-2.5-flash-lite'
+  'gemini-3.1-flash-lite'
 ];
 let currentKeyIndex = 0;
 let currentModelIndex = 0;
@@ -49,7 +47,7 @@ if (fs.existsSync(trackerFile)) {
 }
 
 async function verifyAIProfile(bibit) {
-  const prompt = `Lakukan pencarian internet (grounding) mengenai wangi parfum bernama "${bibit.name}".
+  const prompt = `Lakukan pencarian internet (grounding) mengenai wangi parfum bernama "${bibit.name} perfume fragrance".
 Data saat ini:
 - Deskripsi: ${bibit.description}
 - Intensitas: ${bibit.intensity}
@@ -129,8 +127,14 @@ Jangan menulis teks apapun selain JSON murni.`;
         continue;
       }
       
+      // Error lain (misal safety block, parse error, bad request)
+      console.error(`[Error API] ${bibit.name} | Model: ${model} | Error:`, msg);
       await new Promise(r => setTimeout(r, 5000));
-      currentModelIndex++;
+      // Jangan langsung ganti model kalau ini cuma error format JSON, coba lagi di model yang sama.
+      // Tapi kalau retry > 3 kali untuk error yang sama, baru lompat model.
+      if (retryCount % 3 === 0) {
+        currentModelIndex++;
+      }
     }
   }
 }

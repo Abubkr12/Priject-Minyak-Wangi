@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { useCart } from "@/lib/cart-context";
 import { getSupabase } from "@/lib/supabase";
@@ -230,34 +231,7 @@ export default function KatalogPage() {
   return (
     <div className="customer-page">
       {/* Topbar */}
-      <header className="topbar" role="banner">
-        <Link href="/" className="topbar__brand" aria-label="Kembali ke beranda">
-          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
-        </Link>
-        <div className="topbar__spacer" />
-        <nav className="topbar__nav" aria-label="Navigasi utama">
-          <Link href="/" className="topbar__nav-link"><Package size={15} /> Beranda</Link>
-          <Link href="/katalog" className="topbar__nav-link" style={{ color: "var(--c-gold)" }}><Grid3X3 size={15} /> Katalog</Link>
-          <Link href="/about" className="topbar__nav-link"><Bot size={15} /> Tentang</Link>
-        </nav>
-        <div className="topbar__actions">
-          <ThemeToggle />
-          <Link href="/keranjang" className="btn-icon" aria-label={`Keranjang (${totalItems})`} style={{ position: "relative" }}>
-            <ShoppingBag size={18} />
-            {totalItems > 0 && (
-              <span style={{
-                position: "absolute", top: -6, right: -6,
-                width: 18, height: 18, borderRadius: "50%",
-                background: "var(--c-gold)", color: "#0a0c0b",
-                fontSize: "0.65rem", fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {totalItems}
-              </span>
-            )}
-          </Link>
-        </div>
-      </header>
+      <PageHeader />
 
       {/* Page Hero */}
       <section style={{

@@ -22,13 +22,7 @@ export default function RefillLandingPage() {
 
   return (
     <div className="customer-page" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
-      <header className="topbar" role="banner" style={{ borderBottom: "1px solid var(--c-border)", background: "var(--glass-bg)", backdropFilter: "blur(12px)", position: "sticky", top: 0, zIndex: 100 }}>
-        <Link href="/" className="topbar__brand">
-          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
-        </Link>
-        <div className="topbar__spacer" />
-        <ThemeToggle />
-      </header>
+      <PageHeader />
 
       <main style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "80px 24px" }}>
         <motion.div 

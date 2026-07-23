@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { useCart } from "@/lib/cart-context";
 import { formatRupiah } from "@/lib/types";
@@ -32,33 +33,7 @@ export default function KeranjangPage() {
   return (
     <div className="customer-page">
       {/* Topbar */}
-      <header className="topbar" role="banner">
-        <Link href="/" className="topbar__brand">
-          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
-        </Link>
-        <div className="topbar__spacer" />
-        <nav className="topbar__nav">
-          <Link href="/" className="topbar__nav-link"><Package size={15} /> Beranda</Link>
-          <Link href="/katalog" className="topbar__nav-link"><Grid3X3 size={15} /> Katalog</Link>
-        </nav>
-        <div className="topbar__actions">
-          <ThemeToggle />
-          <div className="btn-icon" style={{ position: "relative", color: "var(--c-gold)" }}>
-            <ShoppingBag size={18} />
-            {totalItems > 0 && (
-              <span style={{
-                position: "absolute", top: -6, right: -6,
-                width: 18, height: 18, borderRadius: "50%",
-                background: "var(--c-gold)", color: "#0a0c0b",
-                fontSize: "0.65rem", fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {totalItems}
-              </span>
-            )}
-          </div>
-        </div>
-      </header>
+      <PageHeader />
 
       {/* Breadcrumb */}
       <div style={{ padding: "80px 0 0", width: "min(1200px, calc(100% - 32px))", margin: "0 auto" }}>

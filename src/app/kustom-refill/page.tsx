@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Send, Sparkles, User, Bot, Loader2, Image as ImageIcon, X, Package, Grid3X3, ShoppingBag } from "lucide-react";
+import { useState, useRef, useEffect, Fragment } from "react";
+import { Send, Sparkles, User, Bot, Loader2, Image as ImageIcon, X, Package, Grid3X3, ShoppingBag, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useCart } from "@/lib/cart-context";
+import { PageHeader } from "@/components/page-header";
 
 type Message = {
   id: string;
@@ -17,6 +18,7 @@ type Message = {
 
 export default function KustomRefillChatbot() {
   const { totalItems } = useCart();
+  const router = useRouter();
   const [user, setUser] = useState<any>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
@@ -31,27 +33,35 @@ export default function KustomRefillChatbot() {
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  const [bibitList, setBibitList] = useState<any[]>([]);
+  const [botolList, setBotolList] = useState<any[]>([]);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Fetch User
+  // Fetch User & Catalog
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchInit = async () => {
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient(true);
+      
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
+
+      const { data: bibit } = await supabase.from('bibit').select('*').eq('is_active', true);
+      const { data: botol } = await supabase.from('botol').select('*').eq('is_active', true);
+      if (bibit) setBibitList(bibit);
+      if (botol) setBotolList(botol);
     };
-    fetchUser();
+    fetchInit();
   }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Compress image client side
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
@@ -79,18 +89,19 @@ export default function KustomRefillChatbot() {
     reader.readAsDataURL(file);
   };
 
-  const handleSend = async () => {
-    if (!input.trim() && !imageBase64) return;
+  const handleSend = async (overrideInput?: string) => {
+    const textToSend = overrideInput || input.trim();
+    if (!textToSend && !imageBase64) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input.trim() || "Minta rekomendasi parfum dari gambar ini.",
+      content: textToSend || "Minta rekomendasi parfum dari gambar ini.",
       image: imageBase64 || undefined
     };
 
     setMessages(prev => [...prev, userMessage]);
-    setInput("");
+    if (!overrideInput) setInput("");
     setImageBase64(null);
     setLoading(true);
 
@@ -133,50 +144,107 @@ export default function KustomRefillChatbot() {
     }
   };
 
+  const handleCheckout = async (perfumeId: string, ratio: string, bottleId: string) => {
+    if (!user) {
+      toast.error("Silakan login terlebih dahulu untuk memesan");
+      router.push("/login?redirect=/kustom-refill");
+      return;
+    }
+    const perfume = bibitList.find(b => b.id.toString() === perfumeId);
+    const botol = botolList.find(b => b.id.toString() === bottleId);
+    if (!perfume || !botol) {
+      toast.error("Data parfum atau botol tidak valid");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const res = await fetch("/api/custom-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customer_name: user.user_metadata?.full_name || "Pelanggan Ela",
+          customer_whatsapp: user.user_metadata?.phone || "08000000000",
+          base_note: perfume.name,
+          description: `Rasio: ${ratio}, Botol: ${botol.name}`,
+          volume_ml: botol.capacity_ml,
+          ai_recipe: `Parfum: ${perfume.name}\nRasio: ${ratio}\nBotol: ${botol.name}\nIntensitas: ${perfume.intensity}`
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success("Pesanan berhasil dibuat!");
+      router.push(`/checkout/custom/${data.data.id}`);
+    } catch (err: any) {
+      toast.error(err.message || "Gagal membuat pesanan");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderMessageContent = (content: string) => {
+    const regex = /(\[PERFUME_CARD:id=[^\]]+\]|\[BOTTLE_CARD:id=[^\]]+\]|\[CHECKOUT_BUTTON:[^\]]+\])/g;
+    const parts = content.split(regex);
+    
+    return parts.map((part, index) => {
+      if (part.startsWith('[PERFUME_CARD:id=')) {
+        const id = part.match(/id=([^\]]+)/)?.[1];
+        const bibit = bibitList.find(b => b.id.toString() === id);
+        if (!bibit) return null;
+        return (
+          <div key={index} style={{ border: '1px solid var(--c-border)', borderRadius: 'var(--r-md)', padding: 12, marginTop: 12, marginBottom: 12, background: 'var(--c-surface-2)', display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ flex: 1 }}>
+              <h4 style={{ margin: 0, color: 'var(--c-gold)', fontSize: '1.05rem', fontWeight: 600 }}>{bibit.name}</h4>
+              <div style={{ fontSize: '0.85rem', color: 'var(--c-ink-dim)', marginTop: 4 }}>Intensitas: {bibit.intensity} | Akord: {bibit.main_accord}</div>
+            </div>
+            <button onClick={() => handleSend(`Saya memilih parfum: ${bibit.name}`)} className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem', height: 'auto' }}>Pilih Parfum</button>
+          </div>
+        );
+      }
+      if (part.startsWith('[BOTTLE_CARD:id=')) {
+        const id = part.match(/id=([^\]]+)/)?.[1];
+        const botol = botolList.find(b => b.id.toString() === id);
+        if (!botol) return null;
+        return (
+          <div key={index} style={{ border: '1px solid var(--c-border)', borderRadius: 'var(--r-md)', padding: 12, marginTop: 12, marginBottom: 12, background: 'var(--c-surface-2)', display: 'flex', alignItems: 'center', gap: 16 }}>
+            {botol.image_url ? (
+              <img src={botol.image_url} alt={botol.name} style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 4 }} />
+            ) : (
+              <div style={{ width: 48, height: 48, borderRadius: 4, background: 'var(--c-surface-1)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed var(--c-border)' }}>
+                <Package size={20} color="var(--c-ink-dim)" />
+              </div>
+            )}
+            <div style={{ flex: 1 }}>
+              <h4 style={{ margin: 0, color: 'var(--c-gold)', fontSize: '1.05rem', fontWeight: 600 }}>{botol.name}</h4>
+              <div style={{ fontSize: '0.85rem', color: 'var(--c-ink-dim)', marginTop: 4 }}>Kapasitas: {botol.capacity_ml}ml | Rp{botol.price.toLocaleString('id-ID')}</div>
+            </div>
+            <button onClick={() => handleSend(`Saya memilih botol: ${botol.name}`)} className="btn btn-ghost" style={{ padding: '8px 16px', fontSize: '0.85rem', height: 'auto' }}>Pilih Botol</button>
+          </div>
+        );
+      }
+      if (part.startsWith('[CHECKOUT_BUTTON:')) {
+        const paramsStr = part.match(/\[CHECKOUT_BUTTON:([^\]]+)\]/)?.[1];
+        if (!paramsStr) return null;
+        const paramArr = paramsStr.split('|').map(s => s.split('='));
+        const params: any = {};
+        paramArr.forEach(([k,v]) => { if(k&&v) params[k]=v; });
+        
+        return (
+          <div key={index} style={{ marginTop: 24, marginBottom: 12 }}>
+            <button onClick={() => handleCheckout(params.perfumeId, params.ratio, params.bottleId)} className="btn btn-primary" style={{ width: '100%', padding: '12px', fontSize: '1rem' }}>
+              <ShoppingCart size={18} style={{ marginRight: 8 }} /> Pesan Sekarang
+            </button>
+          </div>
+        );
+      }
+      return <Fragment key={index}>{part}</Fragment>;
+    });
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', paddingTop: 64, boxSizing: 'border-box', background: 'var(--c-bg)', color: 'var(--c-ink)', fontFamily: 'var(--font-body)' }}>
       {/* Topbar */}
-      <header className="topbar" role="banner">
-        <Link href="/" className="topbar__brand" aria-label="Kembali ke beranda">
-          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
-        </Link>
-        <div className="topbar__spacer" />
-        <nav className="topbar__nav" aria-label="Navigasi utama">
-          <Link href="/" className="topbar__nav-link"><Package size={15} /> Beranda</Link>
-          <Link href="/katalog" className="topbar__nav-link"><Grid3X3 size={15} /> Katalog</Link>
-          <Link href="/about" className="topbar__nav-link"><Bot size={15} /> Tentang</Link>
-        </nav>
-        <div className="topbar__actions">
-          <ThemeToggle />
-          
-          {user ? (
-            <Link href="/profil" className="btn-icon" aria-label="Profil Saya">
-              <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--c-gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600 }}>
-                {user.user_metadata?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-              </div>
-            </Link>
-          ) : (
-            <Link href="/login" className="btn" style={{ padding: '0 16px', height: '36px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.06)' }}>
-              Masuk
-            </Link>
-          )}
-
-          <Link href="/keranjang" className="btn-icon" aria-label={`Keranjang (${totalItems})`} style={{ position: "relative" }}>
-            <ShoppingBag size={18} />
-            {totalItems > 0 && (
-              <span style={{
-                position: "absolute", top: -6, right: -6,
-                width: 18, height: 18, borderRadius: "50%",
-                background: "var(--c-gold)", color: "#0a0c0b",
-                fontSize: "0.65rem", fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                {totalItems}
-              </span>
-            )}
-          </Link>
-        </div>
-      </header>
+      <PageHeader />
 
       {/* Main Container */}
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -238,7 +306,7 @@ export default function KustomRefillChatbot() {
                     <img src={msg.image} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: 300, borderRadius: 'var(--r-md)', marginBottom: 12, objectFit: 'contain' }} />
                   )}
                   <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6, fontSize: '0.95rem' }}>
-                    {msg.content}
+                    {msg.role === 'assistant' ? renderMessageContent(msg.content) : msg.content}
                   </div>
                 </div>
 
@@ -256,7 +324,7 @@ export default function KustomRefillChatbot() {
                   <Bot size={20} color="var(--c-gold)" />
                 </div>
                 <div style={{ background: 'var(--c-surface-1)', color: 'var(--c-ink)', padding: '16px 20px', borderRadius: 'var(--r-lg)', borderTopLeftRadius: 4, border: '1px solid var(--c-border)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <Loader2 className="animate-spin" size={16} color="var(--c-gold)" />
+                  <div className="loader" style={{ width: '20px', height: '20px' }} />
                   <span style={{ fontSize: '0.9rem', color: 'var(--c-ink-dim)' }}>Master Perfumer sedang meracik...</span>
                 </div>
               </div>
@@ -310,7 +378,7 @@ export default function KustomRefillChatbot() {
               />
               
               <button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={loading || (!input.trim() && !imageBase64)}
                 style={{ 
                   padding: '10px', background: 'transparent', border: 'none', 
@@ -318,7 +386,7 @@ export default function KustomRefillChatbot() {
                   cursor: (loading || (!input.trim() && !imageBase64)) ? 'not-allowed' : 'pointer' 
                 }}
               >
-                {loading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} />}
+                {loading ? <div className="loader" style={{ width: '20px', height: '20px', display: 'inline-grid' }} /> : <Send size={20} />}
               </button>
             </div>
             

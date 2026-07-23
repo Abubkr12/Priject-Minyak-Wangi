@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { User, LogOut, Package, Tag, Info, MapPin, CheckCircle2 } from 'lucide-react'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { PageHeader } from '@/components/page-header'
 import { updateProfile, updateAvatarUrl } from './actions'
 import AddressActions from './AddressActions'
 import { AvatarUpload } from '@/components/avatar-upload'
@@ -38,13 +39,7 @@ export default async function ProfilPage() {
 
   return (
     <div className="customer-page">
-      <header className="topbar" role="banner">
-        <Link href="/" className="topbar__brand">
-          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
-        </Link>
-        <div className="topbar__spacer" />
-        <ThemeToggle />
-      </header>
+      <PageHeader />
 
       <main className="workspace" style={{ paddingTop: '100px' }}>
         <div className="workspace-grid" style={{ gridTemplateColumns: '280px 1fr' }}>

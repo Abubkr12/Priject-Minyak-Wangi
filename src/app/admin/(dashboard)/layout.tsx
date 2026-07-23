@@ -67,7 +67,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       href: "/admin/pengaturan", 
       icon: Settings,
       subItems: [
-        { name: "Harga Bahan", href: "/admin/pengaturan/harga-bibit" },
         { name: "Personalisasi AI", href: "/admin/pengaturan/ai" },
         { name: "Integrasi API", href: "/admin/pengaturan/api" },
         { name: "Metode Pembayaran", href: "/admin/pengaturan/pembayaran" },

@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { createClient } from "@/lib/supabase/client";
 
 const navLinks = [
   { label: "Beranda", href: "/" },
@@ -20,6 +21,62 @@ export function PageHeader() {
   const pathname = usePathname();
   const { totalItems } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    
+    const fetchProfile = async (userId: string) => {
+      const { data } = await supabase
+        .from('customer_profiles')
+        .select('avatar_url')
+        .eq('id', userId)
+        .single();
+      if (data?.avatar_url) {
+        if (data.avatar_url.startsWith('http')) {
+          setAvatarUrl(data.avatar_url);
+        } else {
+          setAvatarUrl(supabase.storage.from('avatars').getPublicUrl(data.avatar_url).data.publicUrl);
+        }
+      } else {
+        setAvatarUrl(null);
+      }
+
+      // Track online status max once per 5 minutes per session
+      const lastUpdate = sessionStorage.getItem('last_seen_update');
+      const now = Date.now();
+      if (!lastUpdate || now - parseInt(lastUpdate) > 5 * 60 * 1000) {
+        sessionStorage.setItem('last_seen_update', now.toString());
+        await supabase.from('customer_profiles').upsert({
+          id: userId,
+          last_seen_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+      }
+    };
+
+    supabase.auth.getUser().then((response) => {
+      const u = response.data.user;
+      setUser(u);
+      if (u) fetchProfile(u.id);
+    });
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        const u = session?.user || null;
+        setUser(u);
+        if (u) {
+          fetchProfile(u.id);
+        } else {
+          setAvatarUrl(null);
+        }
+      }
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   return (
     <>
@@ -55,6 +112,23 @@ export function PageHeader() {
 
         <div className="topbar__actions">
           <ThemeToggle />
+          
+          {user ? (
+            <Link href="/profil" className="btn-icon" aria-label="Profil Saya">
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="Avatar" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--c-gold)' }} />
+              ) : (
+                <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--c-gold)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 600 }}>
+                  {user.user_metadata?.full_name?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+              )}
+            </Link>
+          ) : (
+            <Link href="/login" className="btn" style={{ padding: '0 16px', height: '36px', fontSize: '0.85rem', background: 'rgba(255,255,255,0.06)' }}>
+              Masuk
+            </Link>
+          )}
+
           <Link
             href="/keranjang"
             className="btn-icon"

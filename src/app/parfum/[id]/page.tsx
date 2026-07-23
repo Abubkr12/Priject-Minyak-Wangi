@@ -21,6 +21,7 @@ import {
   Wind,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { Footer } from "@/components/footer";
 import { useCart } from "@/lib/cart-context";
 import { getSupabase } from "@/lib/supabase";
@@ -260,11 +261,7 @@ export default function PerfumeDetailPage() {
   if (loading) {
     return (
       <div className="customer-page">
-        <header className="topbar" role="banner">
-          <Link href="/" className="topbar__brand"><img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} /></Link>
-          <div className="topbar__spacer" />
-          <div className="topbar__actions"><ThemeToggle /></div>
-        </header>
+        <PageHeader />
         <div style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div style={{ textAlign: "center", color: "var(--c-ink-dim)" }}>Memuat...</div>
         </div>
@@ -276,11 +273,7 @@ export default function PerfumeDetailPage() {
   if (!perfume) {
     return (
       <div className="customer-page">
-        <header className="topbar" role="banner">
-          <Link href="/" className="topbar__brand"><img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} /></Link>
-          <div className="topbar__spacer" />
-          <div className="topbar__actions"><ThemeToggle /></div>
-        </header>
+        <PageHeader />
         <div style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 16 }}>
           <Package size={56} style={{ color: "var(--c-ink-dim)", opacity: 0.3 }} />
           <h2 style={{ fontFamily: "var(--font-display)", fontWeight: 400, color: "var(--c-ink-muted)" }}>Parfum tidak ditemukan</h2>
@@ -294,29 +287,7 @@ export default function PerfumeDetailPage() {
   return (
     <div className="customer-page">
       {/* Topbar */}
-      <header className="topbar" role="banner">
-        <Link href="/" className="topbar__brand">
-          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
-        </Link>
-        <div className="topbar__spacer" />
-        <nav className="topbar__nav">
-          <Link href="/" className="topbar__nav-link"><Package size={15} /> Beranda</Link>
-          <Link href="/katalog" className="topbar__nav-link"><Grid3X3 size={15} /> Katalog</Link>
-        </nav>
-        <div className="topbar__actions">
-          <ThemeToggle />
-          <Link href="/keranjang" className="btn-icon" style={{ position: "relative" }}>
-            <ShoppingBag size={18} />
-            {totalItems > 0 && (
-              <span style={{
-                position: "absolute", top: -6, right: -6, width: 18, height: 18, borderRadius: "50%",
-                background: "var(--c-gold)", color: "#0a0c0b", fontSize: "0.65rem", fontWeight: 700,
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>{totalItems}</span>
-            )}
-          </Link>
-        </div>
-      </header>
+      <PageHeader />
 
       {/* Breadcrumb */}
       <div style={{ padding: "80px 0 0", width: "min(1200px, calc(100% - 32px))", margin: "0 auto" }}>

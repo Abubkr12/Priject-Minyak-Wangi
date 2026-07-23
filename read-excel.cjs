@@ -1,10 +1,18 @@
 const xlsx = require('xlsx');
+const path = require('path');
 
-const workbook = xlsx.readFile('C:\\Users\\Abu Bakar Al Adny\\OneDrive\\Dokumen\\Project Web\\AI Limitation.xlsx');
-console.log('Sheet Names API Key:', workbook.SheetNames);
-for (const sheetName of workbook.SheetNames) {
-  const sheet = workbook.Sheets[sheetName];
-  const data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
-  console.log(`\nSheet: ${sheetName}`);
-  console.log(data.slice(0, 8));
+const filePath = path.join(__dirname, 'public', 'assets', 'Data Bibit Botol Ela Parfum.xlsx');
+try {
+  const workbook = xlsx.readFile(filePath);
+  const sheetNames = workbook.SheetNames;
+  console.log("Sheets:", sheetNames);
+  
+  for (const sheet of sheetNames) {
+    if (sheet.toLowerCase().includes('botol')) continue;
+    console.log(`\n--- Sheet: ${sheet} ---`);
+    const data = xlsx.utils.sheet_to_json(workbook.Sheets[sheet]);
+    console.log(data);
+  }
+} catch (e) {
+  console.error("Error reading excel:", e.message);
 }

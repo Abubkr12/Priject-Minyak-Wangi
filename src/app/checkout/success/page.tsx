@@ -4,7 +4,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle2, AlertCircle, ArrowRight, Upload, Loader2, MessageSquare, FileImage } from 'lucide-react';
-import { ThemeToggle } from '@/components/theme-toggle';
+import { ThemeToggle } from "@/components/theme-toggle";
+import { PageHeader } from "@/components/page-header";
 import { formatRupiah } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import { uploadPaymentProof } from './actions';
@@ -154,13 +155,7 @@ export default function CheckoutSuccessPage() {
 
   return (
     <div className="customer-page">
-      <header className="topbar" role="banner">
-        <Link href="/" className="topbar__brand">
-          <img src="/assets/Ela Parfum.svg" alt="Ela Parfum Logo" style={{ height: "40px", width: "auto" }} />
-        </Link>
-        <div className="topbar__spacer" />
-        <ThemeToggle />
-      </header>
+      <PageHeader />
 
       <main className="workspace" style={{ paddingTop: '100px', paddingBottom: '100px' }}>
         <div style={{ width: 'min(100%, 800px)', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '32px' }}>

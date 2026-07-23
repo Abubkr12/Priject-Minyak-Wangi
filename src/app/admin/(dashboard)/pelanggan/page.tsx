@@ -45,7 +45,8 @@ export default async function PelangganPage() {
       province: profile.province || "",
       postal_code: profile.postal_code || "",
       created_at: profile.created_at || user.created_at,
-      avatar_url: profile.avatar_url || "",
+      last_active: (profile.last_seen_at && new Date(profile.last_seen_at) > new Date(user.last_sign_in_at || 0)) ? profile.last_seen_at : user.last_sign_in_at,
+      avatar_url: profile.avatar_url ? (profile.avatar_url.startsWith('http') ? profile.avatar_url : supabase.storage.from('avatars').getPublicUrl(profile.avatar_url).data.publicUrl) : "",
       orders: userOrders,
       addresses: userAddresses
     };

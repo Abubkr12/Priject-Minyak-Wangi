@@ -16,6 +16,7 @@ type CustomerData = {
   id: string;
   email: string;
   last_sign_in_at?: string;
+  last_active?: string;
   full_name: string;
   phone: string;
   address: string;
@@ -62,7 +63,7 @@ export default function PelangganClient({ customers }: { customers: CustomerData
       )
       .sort((a, b) => {
         if (sortField === "name") return (a.full_name || "").localeCompare(b.full_name || "");
-        if (sortField === "last_login") return new Date(b.last_sign_in_at || 0).getTime() - new Date(a.last_sign_in_at || 0).getTime();
+        if (sortField === "last_login") return new Date(b.last_active || 0).getTime() - new Date(a.last_active || 0).getTime();
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
   }, [customers, search, sortField]);
@@ -163,14 +164,18 @@ export default function PelangganClient({ customers }: { customers: CustomerData
               </tr>
             ) : (
               filteredCustomers.map(c => {
-                const status = getStatus(c.last_sign_in_at);
+                const status = getStatus(c.last_active);
                 return (
                   <tr key={c.id} style={{ borderBottom: "1px solid var(--c-border)", transition: "background 0.2s" }} onMouseOver={e => e.currentTarget.style.background = 'var(--c-surface-2)'} onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
                     <td style={{ padding: "16px 24px" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                        <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--c-gold)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>
-                          {c.full_name ? c.full_name.charAt(0).toUpperCase() : "?"}
-                        </div>
+                        {c.avatar_url ? (
+                          <img src={c.avatar_url} alt="Avatar" style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", border: "1px solid var(--c-border)" }} />
+                        ) : (
+                          <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--c-gold)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>
+                            {c.full_name ? c.full_name.charAt(0).toUpperCase() : "?"}
+                          </div>
+                        )}
                         <div>
                           <div style={{ fontWeight: 600, color: "var(--c-ink)" }}>{c.full_name || "Tanpa Nama"}</div>
                           <div style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)" }}>Bergabung: {new Date(c.created_at).toLocaleDateString("id-ID")}</div>
@@ -182,12 +187,12 @@ export default function PelangganClient({ customers }: { customers: CustomerData
                       <div style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)" }}>{c.phone || "No HP belum diisi"}</div>
                     </td>
                     <td style={{ padding: "16px 24px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: 500, color: status.color, marginBottom: 4 }}>
-                        <div style={{ width: 8, height: 8, borderRadius: "50%", background: status.color }}></div>
+                      <div style={{ fontWeight: 600, color: status.color, display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ width: 8, height: 8, borderRadius: "50%", background: status.color, display: "inline-block" }} />
                         {status.text}
                       </div>
-                      <div style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)" }}>
-                        {c.last_sign_in_at ? `Login: ${new Date(c.last_sign_in_at).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' })}` : 'Belum pernah login'}
+                      <div style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)", marginTop: 4 }}>
+                        Login: {c.last_active ? new Date(c.last_active).toLocaleString("id-ID", { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(/\./g, ':') : '-'}
                       </div>
                       <div style={{ fontSize: "0.85rem", color: "var(--c-ink-dim)", marginTop: 4 }}>
                         Pesanan: {c.orders.length} transaksi

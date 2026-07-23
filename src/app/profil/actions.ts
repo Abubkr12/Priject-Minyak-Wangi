@@ -39,10 +39,21 @@ export async function updateAvatarUrl(avatar_url: string) {
     throw new Error('Not authenticated')
   }
 
+  // Fetch existing to not overwrite other fields if row doesn't exist
+  const { data: existing } = await supabase
+    .from('customer_profiles')
+    .select('full_name, phone')
+    .eq('id', user.id)
+    .single()
+
   const { error } = await supabase
     .from('customer_profiles')
-    .update({ avatar_url })
-    .eq('id', user.id)
+    .upsert({ 
+      id: user.id,
+      avatar_url,
+      ...(existing ? existing : {}),
+      updated_at: new Date().toISOString()
+    })
 
   if (error) {
     console.error('Error updating avatar:', error)

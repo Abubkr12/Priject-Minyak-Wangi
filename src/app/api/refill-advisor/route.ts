@@ -72,24 +72,26 @@ export async function POST(req: Request) {
     }
 
     // 2. Pencarian Data Bibit (Katalog)
-    // Ambil data bibit dari DB
+    // Ambil data dari Supabase
     const { data: bibitList } = await supabase
       .from('bibit')
-      .select('name, intensity, main_accord, stock_ml')
+      .select('id, name, intensity, main_accord, price_per_ml')
       .eq('is_active', true);
       
+    const { data: botolList } = await supabase
+      .from('bottles')
+      .select('id, name, capacity_ml, price')
+      .eq('is_active', true);
+
     // Kelompokkan bibit untuk prompt
     let catalogueText = "Katalog Bibit yang Tersedia (JANGAN rekomendasikan di luar ini!):\n";
     if (bibitList) {
-      const soft = bibitList.filter(b => b.intensity === 'Soft').map(b => b.name).join(", ");
-      const medium = bibitList.filter(b => b.intensity === 'Medium').map(b => b.name).join(", ");
-      const strong = bibitList.filter(b => b.intensity === 'Strong').map(b => b.name).join(", ");
-      const uncategorized = bibitList.filter(b => !b.intensity).map(b => b.name).join(", ");
-      
-      catalogueText += `- Intensity Soft (Woody/Earthy): ${soft}\n`;
-      catalogueText += `- Intensity Medium (Floral/Romantic): ${medium}\n`;
-      catalogueText += `- Intensity Strong (Fresh/Calm): ${strong}\n`;
-      if (uncategorized) catalogueText += `- Lain-lain: ${uncategorized}\n`;
+      catalogueText += bibitList.map(b => `- ${b.name} (Intensitas: ${b.intensity}, Akord: ${b.main_accord}) - Rp${b.price_per_ml || 1500}/ml (id:${b.id})`).join("\n");
+    }
+
+    if (botolList) {
+      catalogueText += "\nKatalog Botol yang Tersedia:\n";
+      catalogueText += botolList.map(b => `- ${b.name} (${b.capacity_ml}ml) - Rp${b.price} (id:${b.id})`).join("\n");
     }
 
     // 3. Rakit Prompt Utuh
@@ -98,12 +100,18 @@ Tugas lu adalah melayani pelanggan secara interaktif dan ramah, tapi JAWABLAH DE
 
 ATURAN KETAT RACIKAN KUSTOM:
 1. Lu HANYA BOLEH merekomendasikan parfum dari "Katalog Bibit yang Tersedia" di bawah ini. JANGAN HALUSINASI menyebut merk lain.
-2. Rasio pencampuran (Kekuatan Aroma) yang diizinkan HANYA ADA 2:
-   - 50/50 (Eau De Parfum)
-   - 70/30 (Extrait De Parfum)
-   JANGAN pernah memberikan atau menyetujui rasio lain (misal 60/40, dilarang!). Jika user meminta di luar itu, tolak dengan sopan dan tawarkan 2 opsi tersebut.
-3. Tanya preferensi user secara bertahap jika belum jelas. Jika sudah jelas, berikan rekomendasi racikan yang pas.
-4. Jika user mengunggah gambar, cobalah menebak notes parfum dari botol/gambar tersebut lalu cocokkan dengan bibit yang kita punya.
+
+ALUR PERCAKAPAN YANG WAJIB DIIKUTI SECARA BERURUTAN (Satu langkah per balasan):
+Langkah 1: Tanyakan preferensi atau tebak dari gambar, lalu REKOMENDASIKAN PARFUM (sertakan tag [PERFUME_CARD:id=X]). BERHENTI di sini dan tunggu user memilih parfum. Jangan tanya rasio dulu.
+Langkah 2: SETELAH user secara eksplisit MEMILIH PARFUM, tanyakan RASIO PENCAMPURAN. (50/50 untuk Eau De Parfum atau 70/30 untuk Extrait De Parfum). BERHENTI di sini dan tunggu user memilih rasio.
+Langkah 3: SETELAH user MEMILIH RASIO, tampilkan daftar botol dan REKOMENDASIKAN BOTOL (sertakan tag [BOTTLE_CARD:id=Y]). BERHENTI di sini dan tunggu user memilih botol.
+Langkah 4: SETELAH user MEMILIH BOTOL, LAKUKAN KALKULASI HARGA TOTAL berdasarkan pilihan mereka, lalu berikan kesimpulan akhir pesanan, dan sisipkan tag [CHECKOUT_BUTTON:perfumeId=X|ratio=Z|bottleId=Y] di bagian bawah agar user bisa "Kirim Permintaan", serta tanyakan apakah mau "Kirim Permintaan atau Ulangi jika tidak sesuai".
+
+PANDUAN KALKULASI HARGA TOTAL:
+- Harga Pelarut per ML (Absolute): Rp0 (GRATIS)
+- Harga Bibit per ML: Lihat harga per ML di katalog bibit.
+Rumus: Harga Botol + (Harga Bibit per ML x (Rasio Bibit% x Kapasitas Botol)). 
+Jelaskan rincian harganya kepada user dengan singkat!
 
 ${catalogueText}`;
 
