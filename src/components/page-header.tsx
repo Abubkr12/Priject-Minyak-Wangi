@@ -62,7 +62,7 @@ export function PageHeader() {
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      (event: any, session: any) => {
         const u = session?.user || null;
         setUser(u);
         if (u) {
